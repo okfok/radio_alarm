@@ -21,7 +21,7 @@ def alarm_trigger(alarm: models.Alert, event: models.AlertEvent):
         logger.info(f'Alarm trigger: {event}: {alarm} silent(out of timetable)')
         return
 
-    if datetime.datetime.now() - alarm.lastUpdate.replace(tzinfo=None) > core.conf.skip_interval:
+    if datetime.datetime.now(datetime.UTC) - alarm.lastUpdate > core.conf.skip_interval:
         logger.info(f'Alarm trigger: {event}: {alarm} silent(skip interval)')
         return
 
