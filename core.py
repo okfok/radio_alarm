@@ -46,6 +46,3 @@ class Status:
         logger.debug("Saving status file")
         with open('status.json', 'w') as f:
             f.write(self.model.model_dump_json())
-
-    # def __del__(self):
-    #     self.save()

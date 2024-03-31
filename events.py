@@ -42,23 +42,7 @@ async def request_status(client):
         logger.info(f'Status check')
         response = await client.get_alerts(core.conf.reginId)
         logger.info(f'Packet received: {response}')
-#         response = """[
-#   {
-#     "regionId": "0",
-#     "regionType": "State",
-#     "regionName": "Test region",
-#     "regionEngName": "Test region",
-#     "lastUpdate": "2024-03-28T22:12:50.204Z",
-#     "activeAlerts": [
-#       {
-#         "regionId": "0",
-#         "regionType": "State",
-#         "type": "UNKNOWN",
-#         "lastUpdate": "2024-03-28T22:10:50.204Z"
-#       }
-#     ]
-#   }
-# ]"""
+
         # TODO: handling exceptions
         status = core.Status()
         regions = TypeAdapter(list[models.Region]).validate_python(response)
@@ -91,7 +75,6 @@ async def request_status(client):
             alarm_trigger(i, models.AlertEvent.end)
             status.model.activeAlerts.remove(i)
 
-        # status.model.activeAlerts = new
         status.save()
 
     except Exception as exc:
