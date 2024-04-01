@@ -4,11 +4,12 @@ import os
 import time
 from enum import Enum
 import pyautogui
-from pygetwindow import Win32Window
-
+import pygetwindow
 from pydantic import BaseModel, Field
 import logging
-
+import win32gui
+import win32con
+import win32api
 logger = logging.getLogger(__name__)
 
 
@@ -102,7 +103,7 @@ class CopyTrigger(Trigger):
             os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
             return True
         except KeyError as err:
-            logger.error("Alert type not configured!")
+            logger.error(f"Alert type({alert.type}) not configured!")
             logger.error(err)
             return False
 
@@ -113,17 +114,24 @@ class ShortcutTrigger(Trigger):
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
 
     def action(self, alert: Alert, event: AlertEvent) -> bool:
+
         # TODO: exception handling
-        win: Win32Window = pyautogui.getWindowsWithTitle(self.window_name)[0]
-        # win.activate()
-        if not win.isActive:  # TODO: focus rework
-            win.minimize()
-            win.maximize()
-            print('remaxed')
+        windows = pygetwindow.getWindowsWithTitle(self.window_name)
 
-        time.sleep(0.2)
+        if len(windows) == 0:
+            return False
+        for win in windows:
+            if win.title == self.window_name:
+                win.minimize()  # TODO: focus rework
+                win.maximize()
 
-        pyautogui.hotkey(*self.shortcut[alert.type][event])
+                time.sleep(0.2)
+                try:
+                    pyautogui.hotkey(*self.shortcut[alert.type][event])
+                except KeyError as err:
+                    logger.error(f"Alert type({alert.type}) not configured!")
+                    logger.error(err)
+                    return False
 
         return True
 
