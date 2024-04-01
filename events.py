@@ -14,71 +14,85 @@ import models
 logger = logging.getLogger(__name__)
 
 
-def alarm_trigger(alarm: models.Alert, event: models.AlertEvent):
-    logger.info(f'Alarm trigger enter: {event}: {alarm}')
+def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
+    logger.info(f'Alert trigger enter: {event}: {alert}')
+
+    if silent:
+        logger.info(f'Alert trigger: {event}: {alert} silent(forced)')
 
     if not core.conf.timetable.is_in_timetable(datetime.datetime.now()):
-        logger.info(f'Alarm trigger: {event}: {alarm} silent(out of timetable)')
+        logger.info(f'Alert trigger: {event}: {alert} silent(out of timetable)')
         return
 
-    if datetime.datetime.now(datetime.UTC) - alarm.lastUpdate > core.conf.skip_interval:
-        logger.info(f'Alarm trigger: {event}: {alarm} silent(skip interval)')
+    if core.conf.reginId != alert.regionId:
+        logger.info(f'Alert trigger: {event}: {alert} silent(wrong regionId)')
         return
 
-    if core.conf.reginId != alarm.regionId:
-        logger.info(f'Alarm trigger: {event}: {alarm} silent(wrong regionId)')
-        return
-
-    try:
-        os.system(f'copy {core.conf.source_files[alarm.type][event]} {core.conf.destination_folder}')
-        logger.info(f'Alarm trigger: {event}: {alarm} finished')
-    except KeyError as err:
-        logger.warning("Alert type not configured!")
-        logger.error(err)
+    for trigger in core.conf.triggers:
+        try:
+            if trigger.action(alert, event):
+                logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
+            else:
+                logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed')
+        except KeyError as err:
+            logger.error("Alert type not configured!")
+            logger.error(err)
 
 
 async def request_status(client):
     try:
-        logger.info(f'Status check')
+        logger.info(f'Status check {datetime.datetime.now()}')
         response = await client.get_alerts(core.conf.reginId)
         logger.info(f'Packet received: {response}')
+        return response
+    except aiohttp.client_exceptions.ClientResponseError as exc:
+        logger.exception(exc)
+        return
 
-        # TODO: handling exceptions
-        status = core.Status()
-        regions = TypeAdapter(list[models.Region]).validate_python(response)
 
-        new = []
-        old = []
+async def periodic_check_alarm(client, is_start: bool = False):
+    response = await request_status(client)
+    if response is None:
+        return
 
-        for region in regions:
-            if region.regionId == core.conf.reginId:
-                if status.model.lastUpdate == region.lastUpdate:
-                    return
+    status = core.Status()
+    regions = TypeAdapter(list[models.Region]).validate_python(response)
 
-                logger.info(f'Status changed {status.model.lastUpdate} -> {region.lastUpdate}')
-                status.model.lastUpdate = region.lastUpdate
-                status.save()
+    new = []
+    old = []
+    _all = []
 
-                for alert in region.activeAlerts:
-                    if alert not in status.model.activeAlerts:
-                        new.append(alert)
+    for region in regions:
+        if region.regionId == core.conf.reginId:
+            if status.model.lastUpdate == region.lastUpdate:
+                return
 
-                for alert in status.model.activeAlerts:
-                    if alert not in region.activeAlerts:
-                        old.append(alert)
+            logger.info(f'Status changed {status.model.lastUpdate} -> {region.lastUpdate}')
+            status.model.lastUpdate = region.lastUpdate
+            status.save()
+
+            _all += region.activeAlerts
+
+            for alert in region.activeAlerts:
+                if alert not in status.model.activeAlerts:
+                    new.append(alert)
+
+            for alert in status.model.activeAlerts:
+                if alert not in region.activeAlerts:
+                    old.append(alert)
+
+    if is_start:
+        status.model.activeAlerts = _all
+    else:
+        for i in old:
+            alarm_trigger(i, models.AlertEvent.end)
+            status.model.activeAlerts.remove(i)
 
         for i in new:
             alarm_trigger(i, models.AlertEvent.start)
             status.model.activeAlerts.append(i)
 
-        for i in old:
-            alarm_trigger(i, models.AlertEvent.end)
-            status.model.activeAlerts.remove(i)
-
-        status.save()
-
-    except Exception as exc:
-        raise exc
+    status.save()
 
 
 async def mainloop():
@@ -86,8 +100,9 @@ async def mainloop():
         # client = Client(session, core.conf.api_key)
         client = Client(session)
         try:
+            await periodic_check_alarm(client, True)
             while True:
-                await request_status(client)
+                await periodic_check_alarm(client)
                 await asyncio.sleep(core.conf.check_interval)
         finally:
             del client

@@ -1,7 +1,15 @@
+import asyncio
 import datetime
+import os
+import time
 from enum import Enum
+import pyautogui
+from pygetwindow import Win32Window
 
 from pydantic import BaseModel, Field
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RegionType(str, Enum):
@@ -72,14 +80,60 @@ class Timetable(BaseModel):
         return any((interval.is_in_interval(dt.time()) for interval in intervals))
 
 
+class TriggerType(int, Enum):
+    copy_file = 0
+    application_shortcut = 1
+
+
+class Trigger(BaseModel):
+    trigger_type: TriggerType
+
+    def action(self, alert: Alert, event: AlertEvent) -> bool:
+        raise NotImplementedError()
+
+
+class CopyTrigger(Trigger):
+    trigger_type: TriggerType = TriggerType.copy_file
+    source_files: dict[AlertType, dict[AlertEvent, str]]
+    destination_folder: str
+
+    def action(self, alert: Alert, event: AlertEvent) -> bool:
+        try:
+            os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
+            return True
+        except KeyError as err:
+            logger.error("Alert type not configured!")
+            logger.error(err)
+            return False
+
+
+class ShortcutTrigger(Trigger):
+    trigger_type: TriggerType = TriggerType.application_shortcut
+    window_name: str
+    shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
+
+    def action(self, alert: Alert, event: AlertEvent) -> bool:
+        # TODO: exception handling
+        win: Win32Window = pyautogui.getWindowsWithTitle(self.window_name)[0]
+        # win.activate()
+        if not win.isActive:  # TODO: focus rework
+            win.minimize()
+            win.maximize()
+            print('remaxed')
+
+        time.sleep(0.2)
+
+        pyautogui.hotkey(*self.shortcut[alert.type][event])
+
+        return True
+
+
 class ConfigModel(BaseModel):
     reginId: str = Field(default='0')
-    source_files: dict[AlertType, dict[AlertEvent, str]] = Field(default_factory=dict)
-    destination_folder: str = Field(default='')
     check_interval: int = Field(default=10)
     timetable: Timetable = Field(default_factory=Timetable)
     api_key: str = Field(default='[API KEY]')
-    skip_interval: datetime.timedelta = Field(default=datetime.timedelta(0, 600))
+    triggers: list[CopyTrigger | ShortcutTrigger] = Field(default_factory=list)
 
 
 class StatusModel(BaseModel):
