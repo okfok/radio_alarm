@@ -14,7 +14,7 @@ import models
 logger = logging.getLogger(__name__)
 
 
-def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
+async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
     logger.info(f'Alert trigger enter: {event}: {alert}')
 
     if silent:
@@ -37,6 +37,8 @@ def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = 
         except KeyError as err:
             logger.error("Alert type not configured!")
             logger.error(err)
+
+    await asyncio.sleep(core.conf.after_alert_sleep_interval.total_seconds())
 
 
 async def request_status(client):
@@ -89,11 +91,11 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
     if not is_start:
         for i in old:
-            alarm_trigger(i, models.AlertEvent.end)
+            await alarm_trigger(i, models.AlertEvent.end)
             status.model.activeAlerts.remove(i)
 
         for i in new:
-            alarm_trigger(i, models.AlertEvent.start)
+            await alarm_trigger(i, models.AlertEvent.start)
             status.model.activeAlerts.append(i)
 
     status.model.activeAlerts = _all

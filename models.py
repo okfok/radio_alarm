@@ -146,6 +146,7 @@ class ConfigModel(BaseModel):
     timetable: Timetable = Field(default_factory=Timetable)
     api_key: str = Field(default='[API KEY]')
     triggers: list[CopyTrigger | ShortcutTrigger] = Field(default_factory=list)
+    after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
 
 class StatusModel(BaseModel):
