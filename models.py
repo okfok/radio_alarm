@@ -10,6 +10,7 @@ import logging
 import win32gui
 import win32con
 import win32api
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +41,9 @@ class Alert(BaseModel):
     regionType: RegionType
     type: AlertType
     lastUpdate: datetime.datetime
+
+    def __eq__(self, other: 'Alert'):
+        return self.regionId == other.regionId and self.type == other.type
 
 
 class Region(BaseModel):

@@ -87,9 +87,7 @@ async def periodic_check_alarm(client, is_start: bool = False):
                 if alert not in region.activeAlerts:
                     old.append(alert)
 
-    if is_start:
-        status.model.activeAlerts = _all
-    else:
+    if not is_start:
         for i in old:
             alarm_trigger(i, models.AlertEvent.end)
             status.model.activeAlerts.remove(i)
@@ -97,6 +95,8 @@ async def periodic_check_alarm(client, is_start: bool = False):
         for i in new:
             alarm_trigger(i, models.AlertEvent.start)
             status.model.activeAlerts.append(i)
+
+    status.model.activeAlerts = _all
 
     status.save()
 
