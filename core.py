@@ -1,10 +1,9 @@
 import asyncio
 
 import models
-import logging
+from logs import logger
 
 conf: models.ConfigModel = None
-logger = logging.getLogger(__name__)
 
 loop = asyncio.new_event_loop()
 
@@ -40,7 +39,6 @@ class Status:
         except FileNotFoundError:
             logger.warning("Status file generated.")
             self.model = models.StatusModel()
-        logger.debug("Loaded successfully")
 
     def save(self):
         logger.debug("Saving status file")

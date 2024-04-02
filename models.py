@@ -5,9 +5,7 @@ from enum import Enum
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
-import logging
-
-logger = logging.getLogger(__name__)
+from logs import logger
 
 
 class RegionType(str, Enum):

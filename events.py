@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-import logging
+from logs import logger
 
 from pydantic import TypeAdapter
 
@@ -9,8 +9,6 @@ import aiohttp
 # from ukrainealarm.client import Client
 from uasiren.client import Client
 import models
-
-logger = logging.getLogger(__name__)
 
 
 async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
