@@ -48,6 +48,12 @@ async def request_status(client):
     except aiohttp.client_exceptions.ClientResponseError as exc:
         logger.exception(exc)
         return
+    except aiohttp.client_exceptions.ClientConnectorError as exc:
+        logger.exception(exc)
+        return
+    except TimeoutError as exc:
+        logger.exception(exc)
+        return
 
 
 async def periodic_check_alarm(client, is_start: bool = False):
