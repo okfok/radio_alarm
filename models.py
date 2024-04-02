@@ -79,9 +79,9 @@ class Timetable(BaseModel):
         return any((interval.is_in_interval(dt.time()) for interval in intervals))
 
 
-class TriggerType(int, Enum):
-    copy_file = 0
-    application_shortcut = 1
+class TriggerType(str, Enum):
+    copy_file = 'Copy'
+    windows_application_shortcut = "Win Shortcut"
 
 
 class Trigger(BaseModel):
@@ -91,7 +91,7 @@ class Trigger(BaseModel):
         raise NotImplementedError()
 
 
-class FileCopyTrigger(Trigger):
+class CopyFileTrigger(Trigger):
     trigger_type: TriggerType = TriggerType.copy_file
     source_files: dict[AlertType, dict[AlertEvent, str]]
     destination_folder: str
@@ -106,8 +106,8 @@ class FileCopyTrigger(Trigger):
             return False
 
 
-class WinDirectShortcutTrigger(Trigger):
-    trigger_type: TriggerType = TriggerType.application_shortcut
+class WinAppShortcutTrigger(Trigger):
+    trigger_type: TriggerType = TriggerType.windows_application_shortcut
     window_name: str
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
 
@@ -139,7 +139,7 @@ class ConfigModel(BaseModel):
     check_interval: int = Field(default=10)
     timetable: Timetable = Field(default_factory=Timetable)
     api_key: str = Field(default='[API KEY]')
-    triggers: list[FileCopyTrigger | WinDirectShortcutTrigger] = Field(default_factory=list)
+    triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list)
     after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
 
