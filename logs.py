@@ -9,14 +9,14 @@ def init_logger(debug: bool = False):
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
 
-    info_file_handler = logging.FileHandler('info.log')
+    info_file_handler = logging.FileHandler('info.log', encoding="UTF-8")
     info_file_handler.setFormatter(formatter)
     info_file_handler.setLevel(logging.INFO)
 
     logger.addHandler(info_file_handler)
 
     if debug:
-        debug_file_handler = logging.FileHandler('debug.log')
+        debug_file_handler = logging.FileHandler('debug.log', encoding="UTF-8")
         debug_file_handler.setFormatter(formatter)
         debug_file_handler.setLevel(logging.DEBUG)
 
