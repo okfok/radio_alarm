@@ -91,7 +91,7 @@ class Trigger(BaseModel):
         raise NotImplementedError()
 
 
-class CopyTrigger(Trigger):
+class FileCopyTrigger(Trigger):
     trigger_type: TriggerType = TriggerType.copy_file
     source_files: dict[AlertType, dict[AlertEvent, str]]
     destination_folder: str
@@ -106,7 +106,7 @@ class CopyTrigger(Trigger):
             return False
 
 
-class ShortcutTrigger(Trigger):
+class WinDirectShortcutTrigger(Trigger):
     trigger_type: TriggerType = TriggerType.application_shortcut
     window_name: str
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
@@ -139,7 +139,7 @@ class ConfigModel(BaseModel):
     check_interval: int = Field(default=10)
     timetable: Timetable = Field(default_factory=Timetable)
     api_key: str = Field(default='[API KEY]')
-    triggers: list[CopyTrigger | ShortcutTrigger] = Field(default_factory=list)
+    triggers: list[FileCopyTrigger | WinDirectShortcutTrigger] = Field(default_factory=list)
     after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
 
