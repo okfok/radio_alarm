@@ -1,15 +1,11 @@
 import asyncio
 import datetime
 import os
-import time
 from enum import Enum
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
 import logging
-import win32gui
-import win32con
-import win32api
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +89,7 @@ class TriggerType(int, Enum):
 class Trigger(BaseModel):
     trigger_type: TriggerType
 
-    def action(self, alert: Alert, event: AlertEvent) -> bool:
+    async def action(self, alert: Alert, event: AlertEvent) -> bool:
         raise NotImplementedError()
 
 
@@ -102,7 +98,7 @@ class CopyTrigger(Trigger):
     source_files: dict[AlertType, dict[AlertEvent, str]]
     destination_folder: str
 
-    def action(self, alert: Alert, event: AlertEvent) -> bool:
+    async def action(self, alert: Alert, event: AlertEvent) -> bool:
         try:
             os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
             return True
@@ -117,7 +113,7 @@ class ShortcutTrigger(Trigger):
     window_name: str
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
 
-    def action(self, alert: Alert, event: AlertEvent) -> bool:
+    async def action(self, alert: Alert, event: AlertEvent) -> bool:
 
         # TODO: exception handling
         windows = pygetwindow.getWindowsWithTitle(self.window_name)
@@ -129,7 +125,7 @@ class ShortcutTrigger(Trigger):
                 win.minimize()  # TODO: focus rework
                 win.maximize()
 
-                time.sleep(0.2)
+                await asyncio.sleep(0.2)
                 try:
                     pyautogui.hotkey(*self.shortcut[alert.type][event])
                 except KeyError as err:

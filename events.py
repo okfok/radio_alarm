@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import logging
-import os
 
 from pydantic import TypeAdapter
 
@@ -28,24 +27,26 @@ async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: b
         logger.info(f'Alert trigger: {event}: {alert} silent(wrong regionId)')
         return
 
-    for trigger in core.conf.triggers:
-        try:
-            if trigger.action(alert, event):
-                logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
-            else:
-                logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed')
-        except KeyError as err:
-            logger.error("Alert type not configured!")
-            logger.error(err)
+    [
+        logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
+        if res else
+        logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed')
+        for trigger, res in
+        zip(
+            core.conf.triggers,
+            await asyncio.gather(*map(lambda x: x.action(alert, event), core.conf.triggers))
+        )
+    ]
 
     await asyncio.sleep(core.conf.after_alert_sleep_interval.total_seconds())
+    logger.info(f'Alert trigger exit: {event}: {alert}')
 
 
 async def request_status(client):
     try:
-        logger.info(f'Status check {datetime.datetime.now()}')
+        logger.debug(f'Status check {datetime.datetime.now()}')
         response = await client.get_alerts(core.conf.reginId)
-        logger.info(f'Packet received: {response}')
+        logger.debug(f'Packet received: {response}')
         return response
     except aiohttp.client_exceptions.ClientResponseError as exc:
         logger.exception(exc)
