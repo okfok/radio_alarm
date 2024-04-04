@@ -1,0 +1,68 @@
+{
+  "reginId": "0",
+  "check_interval": 10,
+  "api_base_url": null,
+  "api_key": null,
+  "enable_ssl_validation": true,
+  "triggers": [
+    {
+      "trigger_type": "Copy",
+      "timetable": {
+        "mon": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "tue": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "wed": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "thu": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "fri": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "sat": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "sun": [
+          {
+            "start": "00:00:00",
+            "end": "23:59:59"
+          }
+        ]
+      },
+      "source_files": {
+        "AIR": {
+          "start": "path-to-air-alert-file-start",
+          "end": "path-to-air-alert-file-end"
+        },
+        "ARTILLERY": {
+          "start": "path-to-artillery-alert-file-start",
+          "end": "path-to-artillery-alert-file-end"
+        }
+      },
+      "destination_folder": "destination-folder-path"
+    }
+  ],
+  "after_alert_sleep_interval": "PT0S"
+}

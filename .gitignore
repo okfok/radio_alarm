@@ -1,6 +1,6 @@
 /venv/
 /__pycache__/
 /.idea/
-*.json
+/*.json
 *.log
 /output/

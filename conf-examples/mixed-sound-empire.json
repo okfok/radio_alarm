@@ -1,0 +1,134 @@
+{
+  "reginId": "0",
+  "check_interval": 10,
+  "api_base_url": null,
+  "api_key": null,
+  "enable_ssl_validation": false,
+  "triggers": [
+    {
+      "trigger_type": "Win Shortcut",
+      "timetable": {
+        "mon": [
+          {
+            "start": "00:00:00",
+            "end": "08:00:00"
+          },
+          {
+            "start": "20:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "tue": [
+          {
+            "start": "00:00:00",
+            "end": "08:00:00"
+          },
+          {
+            "start": "20:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "wed": [
+          {
+            "start": "00:00:00",
+            "end": "08:00:00"
+          },
+          {
+            "start": "20:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "thu": [
+          {
+            "start": "00:00:00",
+            "end": "08:00:00"
+          },
+          {
+            "start": "20:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "fri": [
+          {
+            "start": "00:00:00",
+            "end": "08:00:00"
+          },
+          {
+            "start": "20:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "sat": [
+          {
+            "start": "00:00:00",
+            "end": "10:00:00"
+          },
+          {
+            "start": "13:00:00",
+            "end": "23:59:59"
+          }
+        ],
+        "sun": [
+          {
+            "start": "00:00:00",
+            "end": "10:00:00"
+          },
+          {
+            "start": "13:00:00",
+            "end": "23:59:59"
+          }
+        ]
+      },
+      "window_name": "Sound Empire",
+      "shortcut": {
+        "AIR": {
+          "start": [
+            "ctrl",
+            "alt",
+            "a"
+          ],
+          "end": [
+            "ctrl",
+            "alt",
+            "z"
+          ]
+        }
+      }
+    },
+    {
+      "trigger_type": "Copy",
+      "timetable": {
+        "mon": [],
+        "tue": [],
+        "wed": [],
+        "thu": [
+          {
+            "start": "00:00:00",
+            "end": "23:00:00"
+          }
+        ],
+        "fri": [],
+        "sat": [
+          {
+            "start": "10:00:00",
+            "end": "13:00:00"
+          }
+        ],
+        "sun": [
+          {
+            "start": "10:00:00",
+            "end": "13:00:00"
+          }
+        ]
+      },
+      "source_files": {
+        "AIR": {
+          "start": "C:\\Sound Empire\\Blocks\\DSNS\\ПОВІТРЯНА ТРИВОГА.mp3",
+          "end": "C:\\Sound Empire\\Blocks\\DSNS\\ВІДБІЙ ПОВІТРЯНОЇ ТРИВОГИ.mp3"
+        }
+      },
+      "destination_folder": "C:\\Sound Empire\\Alarm\\"
+    }
+  ],
+  "after_alert_sleep_interval": "PT0S"
+}
