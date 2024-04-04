@@ -85,6 +85,7 @@ class TriggerType(str, Enum):
     none = 'None'
     copy_file = 'Copy'
     windows_application_shortcut = "Win Shortcut"
+    local_console_execute = "Local Console Execute"
 
 
 class Trigger(BaseModel):
@@ -139,13 +140,28 @@ class WinAppShortcutTrigger(Trigger):
                     raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
 
 
+class LocalConsoleExecuteTrigger(Trigger):
+    trigger_type: Literal[TriggerType.local_console_execute] = Field(
+        default=TriggerType.local_console_execute
+    )
+    commands: dict[AlertType, dict[AlertEvent, str]] = Field(default_factory=dict)
+
+    async def action(self, alert: Alert, event: AlertEvent) -> None:
+        await super().action(alert, event)
+
+        try:
+            os.system(self.commands[alert.type][event])
+        except KeyError:
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+
+
 class ConfigModel(BaseModel):
     reginId: str = Field(default='0')
     check_interval: int = Field(default=10)
     api_base_url: str | None = Field(default=None)
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list, discriminator='trigger_type')
+    triggers: list[CopyFileTrigger | WinAppShortcutTrigger | LocalConsoleExecuteTrigger] = Field(default_factory=list, discriminator='trigger_type')
 
 
 class StatusModel(BaseModel):
