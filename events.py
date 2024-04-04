@@ -6,9 +6,8 @@ from pydantic import TypeAdapter
 
 import core
 import aiohttp
-import ukrainealarm.client as ukrainealarm_client
-import uasiren.client as uasiren_client
 import models
+from client import Client
 
 
 async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
@@ -104,12 +103,7 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
 async def mainloop():
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)) as session:
-        client = (
-            ukrainealarm_client.Client(session, core.conf.api_key)
-            if core.conf.api_key != '' else
-            uasiren_client.Client(session)
-        )
-        # client = Client(session)
+        client = Client(session, core.conf.api_key)
         try:
             await periodic_check_alarm(client, True)
             while True:

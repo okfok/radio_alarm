@@ -137,7 +137,8 @@ class WinAppShortcutTrigger(Trigger):
 class ConfigModel(BaseModel):
     reginId: str = Field(default='0')
     check_interval: int = Field(default=10)
-    api_key: str = Field(default_factory=str)
+    api_base_url: str | None = Field(default=None)
+    api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
     timetable: Timetable = Field(default_factory=Timetable)
     triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list)
