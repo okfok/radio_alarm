@@ -10,6 +10,9 @@ def init():
     logs.logger.info("Starting")
     core.load_conf()
 
+    if '-reload-conf' in sys.argv:
+        core.save_conf()
+
     core.loop.run_until_complete(events.mainloop())
 
 
