@@ -2,6 +2,8 @@ import asyncio
 import datetime
 import os
 from enum import Enum
+from typing import Literal
+
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
@@ -80,12 +82,13 @@ class Timetable(BaseModel):
 
 
 class TriggerType(str, Enum):
+    none = 'None'
     copy_file = 'Copy'
     windows_application_shortcut = "Win Shortcut"
 
 
 class Trigger(BaseModel):
-    trigger_type: TriggerType
+    trigger_type: Literal[TriggerType.none]
     timetable: Timetable = Field(default_factory=Timetable)
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
@@ -97,9 +100,9 @@ class Trigger(BaseModel):
 
 
 class CopyFileTrigger(Trigger):
-    trigger_type: TriggerType = TriggerType.copy_file
-    source_files: dict[AlertType, dict[AlertEvent, str]]
-    destination_folder: str
+    trigger_type: Literal[TriggerType.copy_file] = Field(default=TriggerType.copy_file)
+    source_files: dict[AlertType, dict[AlertEvent, str]] = Field(default_factory=dict)
+    destination_folder: str = Field(default_factory=str)
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
         if not await super().action(alert, event):
@@ -114,9 +117,11 @@ class CopyFileTrigger(Trigger):
 
 
 class WinAppShortcutTrigger(Trigger):
-    trigger_type: TriggerType = TriggerType.windows_application_shortcut
-    window_name: str
-    shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
+    trigger_type: Literal[TriggerType.windows_application_shortcut] = Field(
+        default=TriggerType.windows_application_shortcut
+    )
+    window_name: str = Field(default_factory=str)
+    shortcut: dict[AlertType, dict[AlertEvent, list[str]]] = Field(default_factory=dict)
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
         if not await super().action(alert, event):
@@ -148,7 +153,7 @@ class ConfigModel(BaseModel):
     api_base_url: str | None = Field(default=None)
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list)
+    triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list, discriminator='trigger_type')
     after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
 
