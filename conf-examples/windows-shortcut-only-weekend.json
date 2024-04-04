@@ -54,6 +54,5 @@
         }
       }
     }
-  ],
-  "after_alert_sleep_interval": "PT0S"
+  ]
 }

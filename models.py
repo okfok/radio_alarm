@@ -146,7 +146,6 @@ class ConfigModel(BaseModel):
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
     triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list, discriminator='trigger_type')
-    after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
 
 class StatusModel(BaseModel):
