@@ -7,7 +7,7 @@ from typing import Literal
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
-from logs import logger
+import exceptions
 
 
 class RegionType(str, Enum):
@@ -91,11 +91,11 @@ class Trigger(BaseModel):
     trigger_type: Literal[TriggerType.none]
     timetable: Timetable = Field(default_factory=Timetable)
 
-    async def action(self, alert: Alert, event: AlertEvent) -> bool:
+    async def action(self, alert: Alert, event: AlertEvent) -> None:
         if not self.is_in_timetable():
-            return False  # TODO: raising exception
+            raise exceptions.OutOfTimeTableException()
 
-    def is_in_timetable(self):
+    def is_in_timetable(self) -> bool:
         return self.timetable.is_in_timetable(datetime.datetime.now())
 
 
@@ -104,16 +104,13 @@ class CopyFileTrigger(Trigger):
     source_files: dict[AlertType, dict[AlertEvent, str]] = Field(default_factory=dict)
     destination_folder: str = Field(default_factory=str)
 
-    async def action(self, alert: Alert, event: AlertEvent) -> bool:
-        if not await super().action(alert, event):
-            return False
+    async def action(self, alert: Alert, event: AlertEvent) -> None:
+        await super().action(alert, event)
+
         try:
             os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
-            return True
-        except KeyError as err:
-            logger.error(f"Alert type({alert.type}) not configured!")
-            logger.error(err)
-            return False
+        except KeyError:
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
 
 
 class WinAppShortcutTrigger(Trigger):
@@ -123,28 +120,23 @@ class WinAppShortcutTrigger(Trigger):
     window_name: str = Field(default_factory=str)
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]] = Field(default_factory=dict)
 
-    async def action(self, alert: Alert, event: AlertEvent) -> bool:
-        if not await super().action(alert, event):
-            return False
+    async def action(self, alert: Alert, event: AlertEvent) -> None:
+        await super().action(alert, event)
 
-        windows = pygetwindow.getWindowsWithTitle(self.window_name)
+        windows = list(filter(lambda x: x == self.window_name, pygetwindow.getWindowsWithTitle(self.window_name)))
 
         if len(windows) == 0:
-            return False
-        for win in windows:
-            if win.title == self.window_name:
-                win.minimize()  # TODO: focus rework
-                win.maximize()
+            raise exceptions.WinWindowNotFoundException(f"Window: {self.window_name} Not Found")
+        for window in windows:
+            if window.title == self.window_name:
+                window.minimize()  # TODO: focus rework
+                window.maximize()
 
                 await asyncio.sleep(0.2)
                 try:
                     pyautogui.hotkey(*self.shortcut[alert.type][event])
-                except KeyError as err:
-                    logger.error(f"Alert type({alert.type}) not configured!")
-                    logger.error(err)
-                    return False
-
-        return True
+                except KeyError:
+                    raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
 
 
 class ConfigModel(BaseModel):

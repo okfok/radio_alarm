@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+
+import exceptions
 from logs import logger
 
 from pydantic import TypeAdapter
@@ -16,26 +18,17 @@ async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: b
     if silent:
         logger.info(f'Alert trigger: {event}: {alert} silent(forced)')
 
-    # if not core.conf.timetable.is_in_timetable(datetime.datetime.now()):
-    #     logger.info(f'Alert trigger: {event}: {alert} silent(out of timetable)')
-    #     return
-
     if core.conf.reginId != alert.regionId:
         logger.info(f'Alert trigger: {event}: {alert} silent(wrong regionId)')
         return
 
-    [
-        logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
-        if res else
-        logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed')
-        for trigger, res in
-        zip(
-            core.conf.triggers,
-            await asyncio.gather(*map(lambda x: x.action(alert, event), core.conf.triggers))
-        )
-    ]
+    for trigger in core.conf.triggers:
+        try:
+            await trigger.action(alert, event)
+            logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
+        except exceptions.TriggerException as exc:
+            logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed: {exc}')
 
-    await asyncio.sleep(core.conf.after_alert_sleep_interval.total_seconds())
     logger.info(f'Alert trigger exit: {event}: {alert}')
 
 
@@ -75,7 +68,6 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
             logger.info(f'Status changed {status.model.lastUpdate} -> {region.lastUpdate}')
             status.model.lastUpdate = region.lastUpdate
-            status.save()
 
             _all += region.activeAlerts
 
@@ -107,7 +99,7 @@ async def mainloop():
         try:
             await periodic_check_alarm(client, True)
             while True:
+                await asyncio.sleep(core.conf.check_interval)  # TODO: after alert sleep interval
                 await periodic_check_alarm(client)
-                await asyncio.sleep(core.conf.check_interval)
         finally:
             del client
