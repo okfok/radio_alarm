@@ -16,9 +16,9 @@ async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: b
     if silent:
         logger.info(f'Alert trigger: {event}: {alert} silent(forced)')
 
-    if not core.conf.timetable.is_in_timetable(datetime.datetime.now()):
-        logger.info(f'Alert trigger: {event}: {alert} silent(out of timetable)')
-        return
+    # if not core.conf.timetable.is_in_timetable(datetime.datetime.now()):
+    #     logger.info(f'Alert trigger: {event}: {alert} silent(out of timetable)')
+    #     return
 
     if core.conf.reginId != alert.regionId:
         logger.info(f'Alert trigger: {event}: {alert} silent(wrong regionId)')

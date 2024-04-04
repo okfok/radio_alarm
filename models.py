@@ -86,9 +86,14 @@ class TriggerType(str, Enum):
 
 class Trigger(BaseModel):
     trigger_type: TriggerType
+    timetable: Timetable = Field(default_factory=Timetable)
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
-        raise NotImplementedError()
+        if not self.is_in_timetable():
+            return False  # TODO: raising exception
+
+    def is_in_timetable(self):
+        return self.timetable.is_in_timetable(datetime.datetime.now())
 
 
 class CopyFileTrigger(Trigger):
@@ -97,6 +102,8 @@ class CopyFileTrigger(Trigger):
     destination_folder: str
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
+        if not await super().action(alert, event):
+            return False
         try:
             os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
             return True
@@ -112,8 +119,9 @@ class WinAppShortcutTrigger(Trigger):
     shortcut: dict[AlertType, dict[AlertEvent, list[str]]]
 
     async def action(self, alert: Alert, event: AlertEvent) -> bool:
+        if not await super().action(alert, event):
+            return False
 
-        # TODO: exception handling
         windows = pygetwindow.getWindowsWithTitle(self.window_name)
 
         if len(windows) == 0:
@@ -140,7 +148,6 @@ class ConfigModel(BaseModel):
     api_base_url: str | None = Field(default=None)
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    timetable: Timetable = Field(default_factory=Timetable)
     triggers: list[CopyFileTrigger | WinAppShortcutTrigger] = Field(default_factory=list)
     after_alert_sleep_interval: datetime.timedelta = Field(default_factory=datetime.timedelta)
 
