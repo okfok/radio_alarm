@@ -12,13 +12,13 @@ def load_conf():
     global conf
     logger.debug("Loading config file")
     try:
-        with open('conf.json', 'r') as f:
+        with open('conf.json', 'r', encoding='utf-8') as f:
             conf = models.ConfigModel.parse_raw(f.read())
 
     except FileNotFoundError as err:
         logger.error("Config file not found! Generating template.")
         conf = models.ConfigModel()
-        with open('conf.json', 'w') as f:
+        with open('conf.json', 'w', encoding='utf-8') as f:
             f.write(conf.model_dump_json())
         logger.debug("Config file generated. Exiting.")
         raise err
@@ -26,7 +26,7 @@ def load_conf():
 
 
 def save_conf():
-    with open('conf.json', 'w') as f:
+    with open('conf.json', 'w', encoding='utf-8') as f:
         f.write(conf.model_dump_json())
 
 
@@ -34,7 +34,7 @@ class Status:
     def __init__(self):
         logger.debug("Loading status file")
         try:
-            with open('status.json', 'r') as f:
+            with open('status.json', 'r', encoding='utf-8') as f:
                 self.model = models.StatusModel.parse_raw(f.read())
         except FileNotFoundError:
             logger.warning("Status file generated.")
@@ -42,5 +42,5 @@ class Status:
 
     def save(self):
         logger.debug("Saving status file")
-        with open('status.json', 'w') as f:
+        with open('status.json', 'w', encoding='utf-8') as f:
             f.write(self.model.model_dump_json())
