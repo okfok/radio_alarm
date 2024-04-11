@@ -10,8 +10,27 @@ from logs import logger
 loop = asyncio.new_event_loop()
 
 
+class EventHandler:
+    _callbacks: list[callable] = []
+
+    def __new__(cls, *args, **kwargs):
+        raise NotImplementedError()
+
+    @classmethod
+    def register_callback(cls, callback):
+        cls._callbacks.append(callback)
+
+    @classmethod
+    async def call_all(cls, event: models.Event):
+        await asyncio.gather(
+            *(
+                callback(event)
+                for callback in cls._callbacks
+            )
+        )
+
+
 class Config:
-    _actions: list[models.Action] = []
     _conf: models.ConfigModel = None
 
     def __new__(cls) -> models.ConfigModel:
@@ -42,28 +61,21 @@ class Config:
 
     @classmethod
     def register_action(cls, action: models.Action):
-        cls._actions.append(action)
+        async def callback(event):
+            await try_job(
+                action.act(event),
+                exceptions.EventActionException,
+                log_func=logger.info,
+                success_log=f'Alert action({action.type}) Finished',
+                fail_log=f'Alert action({action.type}) Failed:'
+            )
+
+        EventHandler.register_callback(callback)
 
     @classmethod
     def register_config_actions(cls):
         for action in cls._conf.actions:
             cls.register_action(action)
-
-    @classmethod
-    async def call(cls, event: models.Event):
-        await asyncio.gather(
-            *
-            (
-                try_job(
-                    action.act(event),
-                    exceptions.EventActionException,
-                    log_func=logger.info,
-                    success_log=f'Alert action({action.type}) Finished',
-                    fail_log=f'Alert action({action.type}) Failed:'
-                )
-                for action in cls._actions
-            )
-        )
 
 
 class Status:

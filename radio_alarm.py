@@ -17,8 +17,7 @@ def init():
     if '--reload-conf' in sys.argv:
         core.Config.save()
 
-    core.loop.run_until_complete(events.mainloop())
-
 
 if __name__ == '__main__':
     init()
+    core.loop.run_until_complete(events.mainloop())

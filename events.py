@@ -24,7 +24,7 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
         logger.info(f'Alert action silent(wrong regionId)')
         return
 
-    await core.Config.call(event)
+    await core.EventHandler.call_all(event)
 
     logger.info(f'Alert action exit')
 
