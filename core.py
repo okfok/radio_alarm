@@ -24,6 +24,8 @@ def load_conf():
             f.write(conf.model_dump_json())
         logger.debug("Config file generated. Exiting.")
         raise err
+    except pydantic.ValidationError as exc:
+        raise exc
     logger.debug("Loaded successfully")
 
 
