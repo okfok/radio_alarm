@@ -1,6 +1,7 @@
 /venv*/
 /__pycache__/
 /.idea/
+/output/
 /*.json
 *.log
-/output/
+*.bak
