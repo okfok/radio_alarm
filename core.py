@@ -1,5 +1,7 @@
 import asyncio
 
+import pydantic
+
 import models
 from logs import logger
 
@@ -36,7 +38,8 @@ class Status:
         try:
             with open('status.json', 'r', encoding='utf-8') as f:
                 self.model = models.StatusModel.parse_raw(f.read())
-        except FileNotFoundError:
+        except (FileNotFoundError, pydantic.ValidationError) as exc:
+            logger.exception(exc)
             logger.warning("Status file generated.")
             self.model = models.StatusModel()
 
