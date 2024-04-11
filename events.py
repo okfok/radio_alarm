@@ -24,12 +24,19 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
         logger.info(f'Alert action silent(wrong regionId)')
         return
 
-    for action in core.conf.actions:
-        try:
-            await action.act(event)
-            logger.info(f'Alert action({action.type}) Finished')
-        except exceptions.EventActionException as exc:
-            logger.info(f'Alert action({action.type}) Failed: {exc}')
+    await asyncio.gather(
+        *
+        (
+            core.try_job(
+                action.act(event),
+                exceptions.EventActionException,
+                log_func=logger.info,
+                success_log=f'Alert action({action.type}) Finished',
+                fail_log=f'Alert action({action.type}) Failed:'
+            )
+            for action in core.conf.actions
+        )
+    )
 
     logger.info(f'Alert action exit')
 
