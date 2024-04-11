@@ -3,17 +3,17 @@ class RadioAlarmException(Exception):
         return f'{self.__class__.__name__} {" ".join(self.args)}'
 
 
-class TriggerException(RadioAlarmException):
+class EventActionException(RadioAlarmException):
     pass
 
 
-class AlertTypeNotConfiguredException(TriggerException):
+class AlertTypeNotConfiguredException(EventActionException):
     pass
 
 
-class OutOfTimeTableException(TriggerException):
+class OutOfTimeTableException(EventActionException):
     pass
 
 
-class WinWindowNotFoundException(TriggerException):
+class WinWindowNotFoundException(EventActionException):
     pass

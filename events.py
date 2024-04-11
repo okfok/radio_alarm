@@ -14,7 +14,7 @@ import models
 from client import Client
 
 
-async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: bool = False):
+async def alarm_trigger(alert: models.Alert, event: models.AlertEventType, silent: bool = False):
     logger.info(f'Alert trigger enter: {event}: {alert}')
 
     if silent:
@@ -28,16 +28,19 @@ async def alarm_trigger(alert: models.Alert, event: models.AlertEvent, silent: b
         try:
             await trigger.action(alert, event)
             logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
-        except exceptions.TriggerException as exc:
+        except exceptions.EventActionException as exc:
             logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed: {exc}')
 
     logger.info(f'Alert trigger exit: {event}: {alert}')
 
 
-async def request_status(client):
+async def request_status():
     try:
         logger.debug(f'Status check {datetime.datetime.now()}')
-        response = await client.get_alerts(core.conf.reginId)
+        async with aiohttp.ClientSession(
+                connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)
+        ) as session:
+            response = await Client(session, core.conf.api_key, core.conf.api_base_url).get_alerts(core.conf.reginId)
         logger.debug(f'Packet received: {response}')
         return response
     except aiohttp.ClientError as exc:
@@ -48,8 +51,8 @@ async def request_status(client):
         return
 
 
-async def periodic_check_alarm(client, is_start: bool = False):
-    response = await request_status(client)
+async def periodic_check_alarm(is_start: bool = False):
+    response = await request_status()
     if response is None:
         return
 
@@ -85,11 +88,11 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
     if not is_start:
         for i in old:
-            await alarm_trigger(i, models.AlertEvent.end)
+            await alarm_trigger(i, models.AlertEventType.end)
             status.model.activeAlerts.remove(i)
 
         for i in new:
-            await alarm_trigger(i, models.AlertEvent.start)
+            await alarm_trigger(i, models.AlertEventType.start)
             status.model.activeAlerts.append(i)
 
     status.model.activeAlerts = _all
@@ -98,12 +101,7 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
 
 async def mainloop():
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)) as session:
-        client = Client(session, core.conf.api_key, core.conf.api_base_url)
-        try:
-            await periodic_check_alarm(client, True)
-            while True:
-                await asyncio.sleep(core.conf.check_interval)  # TODO: after alert sleep interval
-                await periodic_check_alarm(client)
-        finally:
-            del client
+    await periodic_check_alarm(True)
+    while True:
+        await asyncio.sleep(core.conf.check_interval)
+        await periodic_check_alarm()
