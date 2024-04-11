@@ -94,6 +94,7 @@ async def periodic_check_alarm(is_start: bool = False):
     status.model.activeAlerts = _all
 
     status.save()
+    await core.EventHandler.call(models.StatusChangeEvent(status=status.model))
 
 
 async def mainloop():

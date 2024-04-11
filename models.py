@@ -31,7 +31,6 @@ class AlertType(str, Enum):
 class EventType(str, Enum):
     none = 'none'
     alert = 'alert'
-    check = 'check'
     status_change = 'status_change'
 
 
@@ -237,3 +236,9 @@ class ConfigModel(BaseModel):
 class StatusModel(BaseModel):
     lastUpdate: datetime.datetime = Field(default_factory=datetime.datetime.now)
     activeAlerts: list[Alert] = Field(default_factory=list)
+
+
+class StatusChangeEvent(Event):
+    type: Literal[EventType.status_change] = Field(default=EventType.status_change)
+    status: StatusModel
+
