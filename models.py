@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+from asyncio import subprocess
 from enum import Enum
 from typing import Literal
 
@@ -85,6 +86,7 @@ class EventType(str, Enum):
     none = 'None'
     copy_file = 'Copy'
     windows_application_shortcut = "Win Shortcut"
+    windows_powershell_application_shortcut = "Win PowerShell Shortcut"
     local_console_execute = "Local Console Execute"
 
 
@@ -139,6 +141,51 @@ class WinAppShortcutEvent(Event):
                 raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
 
 
+class WinAppPSShortcutEvent(Event):
+    trigger_type: Literal[EventType.windows_powershell_application_shortcut] = Field(
+        default=EventType.windows_powershell_application_shortcut
+    )
+    window_name: str = Field(default_factory=str)
+    shortcut: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
+
+    async def action(self, alert: Alert, event: AlertEventType) -> None:
+        await super().action(alert, event)
+
+        try:
+            stdout, stderr = await (
+                await subprocess.create_subprocess_exec(
+                    "powershell", "-Command",
+                    f"""
+                        Add-Type -AssemblyName Microsoft.VisualBasic;
+                        [Microsoft.VisualBasic.Interaction]::AppActivate("{self.window_name}");
+                        """,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            ).communicate()
+
+            if stderr:
+                raise exceptions.WinWindowNotFoundException(f'[stderr]\n{stderr.decode()}')
+
+            stdout, stderr = await (
+                await subprocess.create_subprocess_exec(
+                    "powershell", "-Command",
+                    f"""
+                        Add-Type -AssemblyName System.Windows.Forms
+                        [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[alert.type][event]}')
+                        """,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            ).communicate()
+
+            if stderr:
+                raise exceptions.RadioAlarmException(f'UNKNOWN EXCEPTION: [stderr]\n{stderr.decode()}')
+
+        except KeyError:
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+
+
 class LocalConsoleExecuteEvent(Event):
     trigger_type: Literal[EventType.local_console_execute] = Field(
         default=EventType.local_console_execute
@@ -160,7 +207,7 @@ class ConfigModel(BaseModel):
     api_base_url: str | None = Field(default=None)
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    triggers: list[CopyFileEvent | WinAppShortcutEvent | LocalConsoleExecuteEvent] \
+    triggers: list[CopyFileEvent | WinAppShortcutEvent | LocalConsoleExecuteEvent | WinAppPSShortcutEvent] \
         = Field(default_factory=list, discriminator='trigger_type')
 
 
