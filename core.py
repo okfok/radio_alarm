@@ -23,6 +23,13 @@ class EventHandler:
         cls._callbacks[event_type].append(callback)
 
     @classmethod
+    def register_callback_dec(cls, event_type: models.EventType):
+        def wrapper(callback):
+            cls.register_callback(callback, event_type)
+
+        return wrapper
+
+    @classmethod
     async def call(cls, event: models.Event):
         await asyncio.gather(
             *(
