@@ -12,10 +12,10 @@ def init():
         return
     logs.init_logger(('-debug' in sys.argv))
     logs.logger.info("Starting")
-    core.load_conf()
+    core.Config.load()
 
-    if '-reload-conf' in sys.argv:
-        core.save_conf()
+    if '--reload-conf' in sys.argv:
+        core.Config.save()
 
     core.loop.run_until_complete(events.mainloop())
 

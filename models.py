@@ -101,6 +101,12 @@ class ActionType(str, Enum):
 
 class Action(BaseModel):
     type: Literal[ActionType.none]
+
+    async def act(self, event: Event):
+        raise NotImplementedError()
+
+
+class AlertAction(Action):
     timetable: Timetable = Field(default_factory=Timetable)
 
     async def act(self, event: AlertEvent) -> None:
@@ -111,7 +117,7 @@ class Action(BaseModel):
         return self.timetable.is_in_timetable(datetime.datetime.now())
 
 
-class CopyFileAction(Action):
+class CopyFileAction(AlertAction):
     type: Literal[ActionType.copy_file] = Field(default=ActionType.copy_file)
     source_files: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
     destination_folder: str = Field(default_factory=str)
@@ -125,7 +131,7 @@ class CopyFileAction(Action):
             raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class WinAppShortcutAction(Action):
+class WinAppShortcutAction(AlertAction):
     type: Literal[ActionType.windows_application_shortcut] = Field(
         default=ActionType.windows_application_shortcut
     )
@@ -150,7 +156,7 @@ class WinAppShortcutAction(Action):
                 raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class WinAppPSShortcutAction(Action):
+class WinAppPSShortcutAction(AlertAction):
     type: Literal[ActionType.windows_powershell_application_shortcut] = Field(
         default=ActionType.windows_powershell_application_shortcut
     )
@@ -195,7 +201,7 @@ class WinAppPSShortcutAction(Action):
             raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class LocalConsoleExecuteAction(Action):
+class LocalConsoleExecuteAction(AlertAction):
     type: Literal[ActionType.local_console_execute] = Field(
         default=ActionType.local_console_execute
     )

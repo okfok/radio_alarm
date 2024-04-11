@@ -20,23 +20,11 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
     if silent:
         logger.info(f'Alert action silent(forced)')
 
-    if core.conf.reginId != event.alert.regionId:
+    if core.Config().reginId != event.alert.regionId:
         logger.info(f'Alert action silent(wrong regionId)')
         return
 
-    await asyncio.gather(
-        *
-        (
-            core.try_job(
-                action.act(event),
-                exceptions.EventActionException,
-                log_func=logger.info,
-                success_log=f'Alert action({action.type}) Finished',
-                fail_log=f'Alert action({action.type}) Failed:'
-            )
-            for action in core.conf.actions
-        )
-    )
+    await core.Config.call(event)
 
     logger.info(f'Alert action exit')
 
@@ -45,9 +33,10 @@ async def request_status():
     try:
         logger.debug(f'Status check {datetime.datetime.now()}')
         async with aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)
+                connector=aiohttp.TCPConnector(ssl=core.Config().enable_ssl_validation)
         ) as session:
-            response = await Client(session, core.conf.api_key, core.conf.api_base_url).get_alerts(core.conf.reginId)
+            response = await Client(session, core.Config().api_key, core.Config().api_base_url).get_alerts(
+                core.Config().reginId)
         logger.debug(f'Packet received: {response}')
         return response
     except aiohttp.ClientError as exc:
@@ -76,7 +65,7 @@ async def periodic_check_alarm(is_start: bool = False):
     _all = []
 
     for region in regions:
-        if region.regionId == core.conf.reginId:
+        if region.regionId == core.Config().reginId:
             if status.model.lastUpdate == region.lastUpdate:
                 return
 
@@ -110,5 +99,5 @@ async def periodic_check_alarm(is_start: bool = False):
 async def mainloop():
     await periodic_check_alarm(True)
     while True:
-        await asyncio.sleep(core.conf.check_interval)
+        await asyncio.sleep(core.Config().check_interval)
         await periodic_check_alarm()

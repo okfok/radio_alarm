@@ -3,35 +3,67 @@ from types import coroutine
 
 import pydantic
 
+import exceptions
 import models
 from logs import logger
-
-conf: models.ConfigModel = None
 
 loop = asyncio.new_event_loop()
 
 
-def load_conf():
-    global conf
-    try:
-        with open('conf.json', 'r', encoding='utf-8') as f:
-            conf = models.ConfigModel.parse_raw(f.read())
+class Config:
+    _actions: list[models.Action] = []
+    _conf: models.ConfigModel = None
 
-    except FileNotFoundError as err:
-        logger.error("Config file not found! Generating template.")
-        conf = models.ConfigModel()
+    def __new__(cls) -> models.ConfigModel:
+        return cls._conf
+
+    @classmethod
+    def load(cls):
+        try:
+            with open('conf.json', 'r', encoding='utf-8') as f:
+                cls._conf = models.ConfigModel.parse_raw(f.read())
+                cls.register_config_actions()
+
+        except FileNotFoundError as err:
+            logger.error("Config file not found! Generating template.")
+            cls._conf = models.ConfigModel()
+            with open('conf.json', 'w', encoding='utf-8') as f:
+                f.write(cls._conf.model_dump_json())
+            logger.debug("Config file generated. Exiting.")
+            raise err
+        except pydantic.ValidationError as exc:
+            raise exc
+        logger.debug("Loaded successfully")
+
+    @classmethod
+    def save(cls):
         with open('conf.json', 'w', encoding='utf-8') as f:
-            f.write(conf.model_dump_json())
-        logger.debug("Config file generated. Exiting.")
-        raise err
-    except pydantic.ValidationError as exc:
-        raise exc
-    logger.debug("Loaded successfully")
+            f.write(cls._conf.model_dump_json())
 
+    @classmethod
+    def register_action(cls, action: models.Action):
+        cls._actions.append(action)
 
-def save_conf():
-    with open('conf.json', 'w', encoding='utf-8') as f:
-        f.write(conf.model_dump_json())
+    @classmethod
+    def register_config_actions(cls):
+        for action in cls._conf.actions:
+            cls.register_action(action)
+
+    @classmethod
+    async def call(cls, event: models.Event):
+        await asyncio.gather(
+            *
+            (
+                try_job(
+                    action.act(event),
+                    exceptions.EventActionException,
+                    log_func=logger.info,
+                    success_log=f'Alert action({action.type}) Finished',
+                    fail_log=f'Alert action({action.type}) Failed:'
+                )
+                for action in cls._actions
+            )
+        )
 
 
 class Status:
