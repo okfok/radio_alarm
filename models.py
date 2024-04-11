@@ -124,20 +124,19 @@ class WinAppShortcutTrigger(Trigger):
     async def action(self, alert: Alert, event: AlertEvent) -> None:
         await super().action(alert, event)
 
-        windows = list(filter(lambda x: x == self.window_name, pygetwindow.getWindowsWithTitle(self.window_name)))
+        windows = list(filter(lambda x: x.title == self.window_name, pygetwindow.getWindowsWithTitle(self.window_name)))
 
         if len(windows) == 0:
             raise exceptions.WinWindowNotFoundException(f"Window: {self.window_name} Not Found")
         for window in windows:
-            if window.title == self.window_name:
-                window.minimize()  # TODO: focus rework
-                window.maximize()
+            window.minimize()  # TODO: focus rework
+            window.maximize()
 
-                await asyncio.sleep(0.2)
-                try:
-                    pyautogui.hotkey(*self.shortcut[alert.type][event])
-                except KeyError:
-                    raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+            await asyncio.sleep(0.2)
+            try:
+                pyautogui.hotkey(*self.shortcut[alert.type][event])
+            except KeyError:
+                raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
 
 
 class LocalConsoleExecuteTrigger(Trigger):
