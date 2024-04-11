@@ -24,7 +24,7 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
         logger.info(f'Alert action silent(wrong regionId)')
         return
 
-    await core.EventHandler.call_all(event)
+    await core.EventHandler.call(event)
 
     logger.info(f'Alert action exit')
 
@@ -84,11 +84,11 @@ async def periodic_check_alarm(is_start: bool = False):
 
     if not is_start:
         for i in old:
-            await alarm_trigger(models.AlertEvent(alert=i, type=models.AlertEventType.end))
+            await alarm_trigger(models.AlertEvent(alert=i, alert_type=models.AlertEventType.end))
             status.model.activeAlerts.remove(i)
 
         for i in new:
-            await alarm_trigger(models.AlertEvent(alert=i, type=models.AlertEventType.start))
+            await alarm_trigger(models.AlertEvent(alert=i, alert_type=models.AlertEventType.start))
             status.model.activeAlerts.append(i)
 
     status.model.activeAlerts = _all

@@ -28,6 +28,13 @@ class AlertType(str, Enum):
     INFO = "INFO"
 
 
+class EventType(str, Enum):
+    none = 'none'
+    alert = 'alert'
+    check = 'check'
+    status_change = 'status_change'
+
+
 class AlertEventType(str, Enum):
     start = "start"
     end = "end"
@@ -44,11 +51,12 @@ class Alert(BaseModel):
 
 
 class Event(BaseModel):
-    pass
+    type: Literal[EventType.none]
 
 
 class AlertEvent(Event):
-    type: AlertEventType
+    type: Literal[EventType.alert] = Field(default=EventType.alert)
+    alert_type: AlertEventType
     alert: Alert
 
 
@@ -126,7 +134,7 @@ class CopyFileAction(AlertAction):
         await super().act(event)
 
         try:
-            os.system(f'copy "{self.source_files[event.alert.type][event.type]}" "{self.destination_folder}"')
+            os.system(f'copy "{self.source_files[event.alert.type][event.alert_type]}" "{self.destination_folder}"')
         except KeyError:
             raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
@@ -151,7 +159,7 @@ class WinAppShortcutAction(AlertAction):
 
             await asyncio.sleep(0.2)
             try:
-                pyautogui.hotkey(*self.shortcut[event.alert.type][event.type])
+                pyautogui.hotkey(*self.shortcut[event.alert.type][event.alert_type])
             except KeyError:
                 raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
@@ -187,7 +195,7 @@ class WinAppPSShortcutAction(AlertAction):
                     "powershell", "-Command",
                     f"""
                         Add-Type -AssemblyName System.Windows.Forms
-                        [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[event.alert.type][event.type]}')
+                        [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[event.alert.type][event.alert_type]}')
                         """,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
@@ -211,7 +219,7 @@ class LocalConsoleExecuteAction(AlertAction):
         await super().act(event)
 
         try:
-            os.system(self.commands[event.alert.type][event.type])
+            os.system(self.commands[event.alert.type][event.alert_type])
         except KeyError:
             raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 

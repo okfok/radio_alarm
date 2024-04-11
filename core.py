@@ -11,21 +11,23 @@ loop = asyncio.new_event_loop()
 
 
 class EventHandler:
-    _callbacks: list[callable] = []
+    _callbacks: dict[models.EventType, list[callable]] = {
+        event_type: list() for event_type in models.EventType
+    }
 
     def __new__(cls, *args, **kwargs):
         raise NotImplementedError()
 
     @classmethod
-    def register_callback(cls, callback):
-        cls._callbacks.append(callback)
+    def register_callback(cls, callback, event_type: models.EventType):
+        cls._callbacks[event_type].append(callback)
 
     @classmethod
-    async def call_all(cls, event: models.Event):
+    async def call(cls, event: models.Event):
         await asyncio.gather(
             *(
                 callback(event)
-                for callback in cls._callbacks
+                for callback in cls._callbacks[event.type]
             )
         )
 
@@ -70,7 +72,7 @@ class Config:
                 fail_log=f'Alert action({action.type}) Failed:'
             )
 
-        EventHandler.register_callback(callback)
+        EventHandler.register_callback(callback, models.EventType.alert)
 
     @classmethod
     def register_config_actions(cls):
