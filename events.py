@@ -1,6 +1,8 @@
 import asyncio
 import datetime
 
+import pydantic
+
 import exceptions
 from logs import logger
 
@@ -38,10 +40,7 @@ async def request_status(client):
         response = await client.get_alerts(core.conf.reginId)
         logger.debug(f'Packet received: {response}')
         return response
-    except aiohttp.client_exceptions.ClientResponseError as exc:
-        logger.exception(exc)
-        return
-    except aiohttp.client_exceptions.ClientConnectorError as exc:
+    except aiohttp.ClientError as exc:
         logger.exception(exc)
         return
     except TimeoutError as exc:
@@ -55,7 +54,12 @@ async def periodic_check_alarm(client, is_start: bool = False):
         return
 
     status = core.Status()
-    regions = TypeAdapter(list[models.Region]).validate_python(response)
+
+    try:
+        regions = TypeAdapter(list[models.Region]).validate_python(response)
+    except pydantic.ValidationError as err:
+        logger.exception(err)
+        return
 
     new = []
     old = []
@@ -95,7 +99,7 @@ async def periodic_check_alarm(client, is_start: bool = False):
 
 async def mainloop():
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)) as session:
-        client = Client(session, core.conf.api_key)
+        client = Client(session, core.conf.api_key, core.conf.api_base_url)
         try:
             await periodic_check_alarm(client, True)
             while True:
