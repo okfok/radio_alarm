@@ -14,24 +14,24 @@ import models
 from client import Client
 
 
-async def alarm_trigger(alert: models.Alert, event: models.AlertEventType, silent: bool = False):
-    logger.info(f'Alert trigger enter: {event}: {alert}')
+async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
+    logger.info(f'Alert action enter: {event}')
 
     if silent:
-        logger.info(f'Alert trigger: {event}: {alert} silent(forced)')
+        logger.info(f'Alert action silent(forced)')
 
-    if core.conf.reginId != alert.regionId:
-        logger.info(f'Alert trigger: {event}: {alert} silent(wrong regionId)')
+    if core.conf.reginId != event.alert.regionId:
+        logger.info(f'Alert action silent(wrong regionId)')
         return
 
-    for trigger in core.conf.triggers:
+    for action in core.conf.actions:
         try:
-            await trigger.action(alert, event)
-            logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Finished')
+            await action.act(event)
+            logger.info(f'Alert action({action.type}) Finished')
         except exceptions.EventActionException as exc:
-            logger.info(f'Alert trigger({trigger.trigger_type}): {event}: {alert} Failed: {exc}')
+            logger.info(f'Alert action({action.type}) Failed: {exc}')
 
-    logger.info(f'Alert trigger exit: {event}: {alert}')
+    logger.info(f'Alert action exit')
 
 
 async def request_status():
@@ -88,11 +88,11 @@ async def periodic_check_alarm(is_start: bool = False):
 
     if not is_start:
         for i in old:
-            await alarm_trigger(i, models.AlertEventType.end)
+            await alarm_trigger(models.AlertEvent(alert=i, type=models.AlertEventType.end))
             status.model.activeAlerts.remove(i)
 
         for i in new:
-            await alarm_trigger(i, models.AlertEventType.start)
+            await alarm_trigger(models.AlertEvent(alert=i, type=models.AlertEventType.start))
             status.model.activeAlerts.append(i)
 
     status.model.activeAlerts = _all

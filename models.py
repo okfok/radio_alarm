@@ -43,6 +43,15 @@ class Alert(BaseModel):
         return self.regionId == other.regionId and self.type == other.type
 
 
+class Event(BaseModel):
+    pass
+
+
+class AlertEvent(Event):
+    type: AlertEventType
+    alert: Alert
+
+
 class Region(BaseModel):
     regionId: str
     regionType: RegionType
@@ -82,19 +91,19 @@ class Timetable(BaseModel):
         return any((interval.is_in_interval(dt.time()) for interval in intervals))
 
 
-class EventType(str, Enum):
+class ActionType(str, Enum):
     none = 'None'
-    copy_file = 'Copy'
+    copy_file = 'Copy File'
     windows_application_shortcut = "Win Shortcut"
     windows_powershell_application_shortcut = "Win PowerShell Shortcut"
     local_console_execute = "Local Console Execute"
 
 
-class Event(BaseModel):
-    trigger_type: Literal[EventType.none]
+class Action(BaseModel):
+    type: Literal[ActionType.none]
     timetable: Timetable = Field(default_factory=Timetable)
 
-    async def action(self, alert: Alert, event: AlertEventType) -> None:
+    async def act(self, event: AlertEvent) -> None:
         if not self.is_in_timetable():
             raise exceptions.OutOfTimeTableException()
 
@@ -102,29 +111,29 @@ class Event(BaseModel):
         return self.timetable.is_in_timetable(datetime.datetime.now())
 
 
-class CopyFileEvent(Event):
-    trigger_type: Literal[EventType.copy_file] = Field(default=EventType.copy_file)
+class CopyFileAction(Action):
+    type: Literal[ActionType.copy_file] = Field(default=ActionType.copy_file)
     source_files: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
     destination_folder: str = Field(default_factory=str)
 
-    async def action(self, alert: Alert, event: AlertEventType) -> None:
-        await super().action(alert, event)
+    async def act(self, event: AlertEvent) -> None:
+        await super().act(event)
 
         try:
-            os.system(f'copy "{self.source_files[alert.type][event]}" "{self.destination_folder}"')
+            os.system(f'copy "{self.source_files[event.alert.type][event.type]}" "{self.destination_folder}"')
         except KeyError:
-            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class WinAppShortcutEvent(Event):
-    trigger_type: Literal[EventType.windows_application_shortcut] = Field(
-        default=EventType.windows_application_shortcut
+class WinAppShortcutAction(Action):
+    type: Literal[ActionType.windows_application_shortcut] = Field(
+        default=ActionType.windows_application_shortcut
     )
     window_name: str = Field(default_factory=str)
     shortcut: dict[AlertType, dict[AlertEventType, list[str]]] = Field(default_factory=dict)
 
-    async def action(self, alert: Alert, event: AlertEventType) -> None:
-        await super().action(alert, event)
+    async def act(self, event: AlertEvent) -> None:
+        await super().act(event)
 
         windows = list(filter(lambda x: x.title == self.window_name, pygetwindow.getWindowsWithTitle(self.window_name)))
 
@@ -136,20 +145,20 @@ class WinAppShortcutEvent(Event):
 
             await asyncio.sleep(0.2)
             try:
-                pyautogui.hotkey(*self.shortcut[alert.type][event])
+                pyautogui.hotkey(*self.shortcut[event.alert.type][event.type])
             except KeyError:
-                raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+                raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class WinAppPSShortcutEvent(Event):
-    trigger_type: Literal[EventType.windows_powershell_application_shortcut] = Field(
-        default=EventType.windows_powershell_application_shortcut
+class WinAppPSShortcutAction(Action):
+    type: Literal[ActionType.windows_powershell_application_shortcut] = Field(
+        default=ActionType.windows_powershell_application_shortcut
     )
     window_name: str = Field(default_factory=str)
     shortcut: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
 
-    async def action(self, alert: Alert, event: AlertEventType) -> None:
-        await super().action(alert, event)
+    async def act(self, event: AlertEvent) -> None:
+        await super().act(event)
 
         try:
             stdout, stderr = await (
@@ -172,7 +181,7 @@ class WinAppPSShortcutEvent(Event):
                     "powershell", "-Command",
                     f"""
                         Add-Type -AssemblyName System.Windows.Forms
-                        [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[alert.type][event]}')
+                        [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[event.alert.type][event.type]}')
                         """,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
@@ -183,22 +192,22 @@ class WinAppPSShortcutEvent(Event):
                 raise exceptions.RadioAlarmException(f'UNKNOWN EXCEPTION: [stderr]\n{stderr.decode()}')
 
         except KeyError:
-            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
-class LocalConsoleExecuteEvent(Event):
-    trigger_type: Literal[EventType.local_console_execute] = Field(
-        default=EventType.local_console_execute
+class LocalConsoleExecuteAction(Action):
+    type: Literal[ActionType.local_console_execute] = Field(
+        default=ActionType.local_console_execute
     )
     commands: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
 
-    async def action(self, alert: Alert, event: AlertEventType) -> None:
-        await super().action(alert, event)
+    async def act(self, event: AlertEvent) -> None:
+        await super().act(event)
 
         try:
-            os.system(self.commands[alert.type][event])
+            os.system(self.commands[event.alert.type][event.type])
         except KeyError:
-            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({alert.type}) not configured!")
+            raise exceptions.AlertTypeNotConfiguredException(f"Alert type({event.alert.type}) not configured!")
 
 
 class ConfigModel(BaseModel):
@@ -207,8 +216,8 @@ class ConfigModel(BaseModel):
     api_base_url: str | None = Field(default=None)
     api_key: str | None = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    triggers: list[CopyFileEvent | WinAppShortcutEvent | LocalConsoleExecuteEvent | WinAppPSShortcutEvent] \
-        = Field(default_factory=list, discriminator='trigger_type')
+    actions: list[CopyFileAction | WinAppShortcutAction | WinAppPSShortcutAction | LocalConsoleExecuteAction] \
+        = Field(default_factory=list, discriminator='type')
 
 
 class StatusModel(BaseModel):
