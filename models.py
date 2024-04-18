@@ -32,6 +32,7 @@ class EventType(str, Enum):
     none = 'none'
     alert = 'alert'
     status_change = 'status_change'
+    status_receive = 'status_receive'
 
 
 class AlertEventType(str, Enum):
@@ -242,3 +243,8 @@ class StatusChangeEvent(Event):
     type: Literal[EventType.status_change] = Field(default=EventType.status_change)
     status: StatusModel
 
+
+class StatusReceivedEvent(Event):
+    type: Literal[EventType.status_receive] = Field(default=EventType.status_receive)
+    timestamp: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    regions: list[Region]

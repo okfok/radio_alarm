@@ -1,17 +1,14 @@
 import asyncio
 import datetime
 
+import aiohttp
 import pydantic
-
-import exceptions
-from logs import logger
-
 from pydantic import TypeAdapter
 
 import core
-import aiohttp
 import models
 from client import Client
+from logs import logger
 
 
 async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
@@ -29,7 +26,7 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
     logger.info(f'Alert action exit')
 
 
-async def request_status():
+async def request_status() -> list[models.Region] | None:
     try:
         logger.debug(f'Status check {datetime.datetime.now()}')
         async with aiohttp.ClientSession(
@@ -38,27 +35,23 @@ async def request_status():
             response = await Client(session, core.Config().api_key, core.Config().api_base_url).get_alerts(
                 core.Config().reginId)
         logger.debug(f'Packet received: {response}')
-        return response
-    except aiohttp.ClientError as exc:
-        logger.exception(exc)
-        return
-    except TimeoutError as exc:
+
+        regions = TypeAdapter(list[models.Region]).validate_python(response)
+
+        await core.EventHandler.call(models.StatusReceivedEvent(regions=regions))
+
+        return regions
+    except (aiohttp.ClientError, TimeoutError, pydantic.ValidationError) as exc:
         logger.exception(exc)
         return
 
 
 async def periodic_check_alarm(is_start: bool = False):
-    response = await request_status()
-    if response is None:
+    regions = await request_status()
+    if regions is None:
         return
 
     status = core.Status()
-
-    try:
-        regions = TypeAdapter(list[models.Region]).validate_python(response)
-    except pydantic.ValidationError as err:
-        logger.exception(err)
-        return
 
     new = []
     old = []
