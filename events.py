@@ -35,7 +35,11 @@ async def request_status() -> list[models.Region] | None:
             response = await Client(session, core.Config().api_key, core.Config().api_base_url).get_alerts(
                 core.Config().reginId)
         logger.debug(f'Packet received: {response}')
+
         regions = TypeAdapter(list[models.Region]).validate_python(response)
+
+        await core.EventHandler.call(models.StatusReceivedEvent(regions=regions))
+
         return regions
     except (aiohttp.ClientError, TimeoutError, pydantic.ValidationError) as exc:
         logger.exception(exc)
