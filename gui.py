@@ -27,7 +27,7 @@ async def mainloop():
 
 mainloop_task = None
 
-last_update_label = tk.Label(root, text="Last Update: ")
+last_update_label = tk.Label(root, text="Last Status: ")
 status_label = tk.Label(root, text="Status: ")
 start_button = tk.Button(root, text="Start")
 stop_button = tk.Button(root, text="Stop", state='disabled')
@@ -55,7 +55,7 @@ async def stop():
 
 @core.EventHandler.register_callback_dec(models.EventType.status_change)
 async def set_last_update(event: models.StatusChangeEvent):
-    last_update_label['text'] = f"Last Update: {event.status.lastUpdate}"
+    last_update_label['text'] = f"Last Status: {event.status.lastUpdate}"
     status_label['text'] = f"Status: {
         ' '.join(map(lambda x: x.type, event.status.activeAlerts)) if len(event.status.activeAlerts) > 0 else 'Clear'
     }"
