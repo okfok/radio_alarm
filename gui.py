@@ -17,6 +17,8 @@ init()
 
 root = tk.Tk()
 root.title('Radio Alarm')
+root.geometry('250x150')
+root.resizable(False, False)
 
 ico = Image.open("favicon.ico")
 
