@@ -2,7 +2,7 @@ import asyncio
 import tkinter as tk
 
 import pystray
-from PIL import Image
+from PIL import Image, ImageTk
 from async_tkinter_loop import async_handler, async_mainloop
 from tzlocal import get_localzone
 
@@ -18,8 +18,9 @@ init()
 root = tk.Tk()
 root.title('Radio Alarm')
 
-label = tk.Label(root)
-label.pack()
+ico = Image.open("favicon.ico")
+
+root.wm_iconphoto(True, ImageTk.PhotoImage(ico))
 
 loop = asyncio.get_event_loop()
 
@@ -106,12 +107,11 @@ def show_window(icon, item):
 # Hide the window and show on the system taskbar
 def hide_window():
     root.withdraw()
-    image = Image.open("favicon.ico")
     menu = (
         pystray.MenuItem('Show', show_window),
         pystray.MenuItem('Quit', quit_window),
     )
-    icon = pystray.Icon("name", image, "Radio Alarm", menu)
+    icon = pystray.Icon("name", ico, "Radio Alarm", menu)
     icon.run()
 
 
