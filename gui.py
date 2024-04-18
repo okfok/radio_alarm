@@ -1,6 +1,8 @@
 import asyncio
 import tkinter as tk
 
+import pystray
+from PIL import Image
 from async_tkinter_loop import async_handler, async_mainloop
 from tzlocal import get_localzone
 
@@ -87,6 +89,33 @@ stop_button.pack()
 status_label.pack()
 last_update.pack()
 last_status.pack()
+
+
+# Define a function for quit the window
+def quit_window(icon, item):
+    icon.stop()
+    root.destroy()
+
+
+# Define a function to show the window again
+def show_window(icon, item):
+    icon.stop()
+    root.after(0, root.deiconify)
+
+
+# Hide the window and show on the system taskbar
+def hide_window():
+    root.withdraw()
+    image = Image.open("favicon.ico")
+    menu = (
+        pystray.MenuItem('Show', show_window),
+        pystray.MenuItem('Quit', quit_window),
+    )
+    icon = pystray.Icon("name", image, "Radio Alarm", menu)
+    icon.run()
+
+
+root.protocol('WM_DELETE_WINDOW', hide_window)
 
 if __name__ == '__main__':
     async_mainloop(root)
