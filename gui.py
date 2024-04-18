@@ -14,6 +14,7 @@ TIME_FORMAT = '%H:%M:%S %d.%m'
 init()
 
 root = tk.Tk()
+root.title('Radio Alarm')
 
 label = tk.Label(root)
 label.pack()
@@ -32,7 +33,7 @@ mainloop_task = None
 
 last_update = tk.Label(root, text="Last Update: ")
 last_status = tk.Label(root, text="Last Status: ")
-status_label = tk.Label(root, text="Status: ")
+status_label = tk.Label(root, text="Status: off", fg='#00f')
 start_button = tk.Button(root, text="Start")
 stop_button = tk.Button(root, text="Stop", state='disabled')
 
@@ -40,6 +41,7 @@ stop_button = tk.Button(root, text="Stop", state='disabled')
 async def start():
     start_button['state'] = 'disabled'
     stop_button['state'] = 'normal'
+
     global mainloop_task
     mainloop_task = loop.create_task(events.mainloop())
 
@@ -50,6 +52,8 @@ async def start():
     finally:
         stop_button['state'] = 'disabled'
         start_button['state'] = 'normal'
+        status_label['text'] = 'Status: off'
+        status_label['fg'] = '#00f'
 
 
 async def stop():
@@ -67,6 +71,7 @@ async def set_last_status(event: models.StatusChangeEvent):
     if len(event.status.activeAlerts) > 0
     else 'Clear'
     }"
+    status_label['fg'] = '#f00' if len(event.status.activeAlerts) else '#0f0'
 
 
 @core.EventHandler.register_callback_dec(models.EventType.status_receive)
@@ -79,9 +84,9 @@ stop_button.config(command=async_handler(stop))
 
 start_button.pack()
 stop_button.pack()
+status_label.pack()
 last_update.pack()
 last_status.pack()
-status_label.pack()
 
 if __name__ == '__main__':
     async_mainloop(root)
