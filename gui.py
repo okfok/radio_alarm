@@ -2,11 +2,14 @@ import asyncio
 import tkinter as tk
 
 from async_tkinter_loop import async_handler, async_mainloop
+from tzlocal import get_localzone
 
 import core
 import events
 import models
 from radio_alarm import init
+
+TIME_FORMAT = '%H:%M:%S %d.%m'
 
 init()
 
@@ -27,7 +30,8 @@ async def mainloop():
 
 mainloop_task = None
 
-last_update_label = tk.Label(root, text="Last Status: ")
+last_update = tk.Label(root, text="Last Update: ")
+last_status = tk.Label(root, text="Last Status: ")
 status_label = tk.Label(root, text="Status: ")
 start_button = tk.Button(root, text="Start")
 stop_button = tk.Button(root, text="Stop", state='disabled')
@@ -54,20 +58,30 @@ async def stop():
 
 
 @core.EventHandler.register_callback_dec(models.EventType.status_change)
-async def set_last_update(event: models.StatusChangeEvent):
-    last_update_label['text'] = f"Last Status: {event.status.lastUpdate}"
+async def set_last_status(event: models.StatusChangeEvent):
+    tz = get_localzone()
+    local_timestamp = event.status.lastUpdate.astimezone(tz)
+    last_status['text'] = f"Last Status: {local_timestamp.strftime(TIME_FORMAT)}"
     status_label['text'] = f"Status: {
-        ' '.join(map(lambda x: x.type, event.status.activeAlerts)) if len(event.status.activeAlerts) > 0 else 'Clear'
+    ' '.join(map(lambda x: x.type, event.status.activeAlerts))
+    if len(event.status.activeAlerts) > 0
+    else 'Clear'
     }"
+
+
+@core.EventHandler.register_callback_dec(models.EventType.status_receive)
+async def set_last_update(event: models.StatusReceivedEvent):
+    last_update['text'] = f"Last Update: {event.timestamp.strftime(TIME_FORMAT)}"
 
 
 start_button.config(command=async_handler(start))
 stop_button.config(command=async_handler(stop))
 
-last_update_label.pack()
-status_label.pack()
 start_button.pack()
 stop_button.pack()
+last_update.pack()
+last_status.pack()
+status_label.pack()
 
 if __name__ == '__main__':
     async_mainloop(root)
