@@ -1,4 +1,6 @@
 import asyncio
+import os
+import sys
 import tkinter as tk
 
 import pystray
@@ -11,6 +13,18 @@ import events
 import models
 from radio_alarm import init
 
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 TIME_FORMAT = '%H:%M:%S %d.%m'
 
 init()
@@ -20,7 +34,7 @@ root.title('Radio Alarm')
 root.geometry('250x150')
 root.resizable(False, False)
 
-ico = Image.open("favicon.ico")
+ico = Image.open(resource_path("favicon.ico"))
 
 root.wm_iconphoto(True, ImageTk.PhotoImage(ico))
 
