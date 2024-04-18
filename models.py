@@ -248,3 +248,4 @@ class StatusReceivedEvent(Event):
     type: Literal[EventType.status_receive] = Field(default=EventType.status_receive)
     timestamp: datetime.datetime = Field(default_factory=datetime.datetime.now)
     regions: list[Region]
+    is_start: bool = Field(default=False)

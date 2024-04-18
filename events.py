@@ -60,6 +60,8 @@ async def periodic_check_alarm(is_start: bool = False):
     for region in regions:
         if region.regionId == core.Config().reginId:
             if status.model.lastUpdate == region.lastUpdate:
+                if is_start:
+                    await core.EventHandler.call(models.StatusChangeEvent(status=status.model, is_start=True))
                 return
 
             logger.info(f'Status changed {status.model.lastUpdate} -> {region.lastUpdate}')
