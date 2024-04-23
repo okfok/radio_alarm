@@ -10,6 +10,7 @@ from tzlocal import get_localzone
 
 import core
 import events
+import logs
 import models
 from radio_alarm import init
 
@@ -64,11 +65,14 @@ async def start():
     global mainloop_task
     mainloop_task = loop.create_task(events.mainloop())
 
+    logs.logger.info("Mainloop enter")
+
     try:
         await asyncio.gather(mainloop_task)
     except asyncio.CancelledError:
-        ...
+        pass
     finally:
+        logs.logger.info("Mainloop exit")
         stop_button['state'] = 'disabled'
         start_button['state'] = 'normal'
         status_label['text'] = 'Status: off'
@@ -85,7 +89,8 @@ async def set_last_status(event: models.StatusChangeEvent):
     tz = get_localzone()
     local_timestamp = event.status.lastUpdate.astimezone(tz)
     last_status['text'] = f"Last Status: {local_timestamp.strftime(TIME_FORMAT)}"
-    status_label['text'] = f"Status: {' '.join(map(lambda x: x.type, event.status.activeAlerts)) if len(event.status.activeAlerts) > 0 else 'Clear'}"
+    status_label[
+        'text'] = f"Status: {' '.join(map(lambda x: x.type, event.status.activeAlerts)) if len(event.status.activeAlerts) > 0 else 'Clear'}"
     status_label['fg'] = '#f00' if len(event.status.activeAlerts) else '#0f0'
 
 
