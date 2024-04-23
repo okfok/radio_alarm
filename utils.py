@@ -7,8 +7,8 @@ from client import Client
 
 
 async def region_list():
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=core.conf.enable_ssl_validation)) as session:
-        print(await Client(session, core.conf.api_key).get_regions())
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=core.Config().enable_ssl_validation)) as session:
+        print(await Client(session, core.Config().api_key).get_regions())
 
 
 COMMANDS = {
@@ -18,7 +18,7 @@ COMMANDS = {
 
 def console_command(command, *argv):
     try:
-        core.load_conf()
+        core.Config.load()
         asyncio.run(COMMANDS[command](*argv))
     except KeyError:
         print("Wrong Command!")
