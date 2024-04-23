@@ -3,11 +3,12 @@ import datetime
 import os
 from asyncio import subprocess
 from enum import Enum
-from typing import Literal
+from typing import Literal, List, Dict, Union
 
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
+
 import exceptions
 
 
@@ -66,7 +67,7 @@ class Region(BaseModel):
     regionName: str
     regionEngName: str
     lastUpdate: datetime.datetime
-    activeAlerts: list[Alert]
+    activeAlerts: List[Alert]
 
 
 class Interval(BaseModel):
@@ -78,13 +79,13 @@ class Interval(BaseModel):
 
 
 class Timetable(BaseModel):
-    mon: list[Interval] = Field(default_factory=list)
-    tue: list[Interval] = Field(default_factory=list)
-    wed: list[Interval] = Field(default_factory=list)
-    thu: list[Interval] = Field(default_factory=list)
-    fri: list[Interval] = Field(default_factory=list)
-    sat: list[Interval] = Field(default_factory=list)
-    sun: list[Interval] = Field(default_factory=list)
+    mon: List[Interval] = Field(default_factory=list)
+    tue: List[Interval] = Field(default_factory=list)
+    wed: List[Interval] = Field(default_factory=list)
+    thu: List[Interval] = Field(default_factory=list)
+    fri: List[Interval] = Field(default_factory=list)
+    sat: List[Interval] = Field(default_factory=list)
+    sun: List[Interval] = Field(default_factory=list)
 
     def is_in_timetable(self, dt: datetime.datetime):
         intervals = {
@@ -127,7 +128,7 @@ class AlertAction(Action):
 
 class CopyFileAction(AlertAction):
     type: Literal[ActionType.copy_file] = Field(default=ActionType.copy_file)
-    source_files: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
+    source_files: Dict[AlertType, Dict[AlertEventType, str]] = Field(default_factory=dict)
     destination_folder: str = Field(default_factory=str)
 
     async def act(self, event: AlertEvent) -> None:
@@ -144,7 +145,7 @@ class WinAppShortcutAction(AlertAction):
         default=ActionType.windows_application_shortcut
     )
     window_name: str = Field(default_factory=str)
-    shortcut: dict[AlertType, dict[AlertEventType, list[str]]] = Field(default_factory=dict)
+    shortcut: Dict[AlertType, Dict[AlertEventType, List[str]]] = Field(default_factory=dict)
 
     async def act(self, event: AlertEvent) -> None:
         await super().act(event)
@@ -169,7 +170,7 @@ class WinAppPSShortcutAction(AlertAction):
         default=ActionType.windows_powershell_application_shortcut
     )
     window_name: str = Field(default_factory=str)
-    shortcut: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
+    shortcut: Dict[AlertType, Dict[AlertEventType, str]] = Field(default_factory=dict)
 
     async def act(self, event: AlertEvent) -> None:
         await super().act(event)
@@ -213,7 +214,7 @@ class LocalConsoleExecuteAction(AlertAction):
     type: Literal[ActionType.local_console_execute] = Field(
         default=ActionType.local_console_execute
     )
-    commands: dict[AlertType, dict[AlertEventType, str]] = Field(default_factory=dict)
+    commands: Dict[AlertType, Dict[AlertEventType, str]] = Field(default_factory=dict)
 
     async def act(self, event: AlertEvent) -> None:
         await super().act(event)
@@ -227,16 +228,16 @@ class LocalConsoleExecuteAction(AlertAction):
 class ConfigModel(BaseModel):
     reginId: str = Field(default='0')
     check_interval: int = Field(default=10)
-    api_base_url: str | None = Field(default=None)
-    api_key: str | None = Field(default=None)
+    api_base_url: Union[str, None] = Field(default=None)
+    api_key: Union[str, None] = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    actions: list[CopyFileAction | WinAppShortcutAction | WinAppPSShortcutAction | LocalConsoleExecuteAction] \
+    actions: List[Union[CopyFileAction, WinAppShortcutAction, WinAppPSShortcutAction, LocalConsoleExecuteAction]] \
         = Field(default_factory=list, discriminator='type')
 
 
 class StatusModel(BaseModel):
     lastUpdate: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    activeAlerts: list[Alert] = Field(default_factory=list)
+    activeAlerts: List[Alert] = Field(default_factory=list)
 
 
 class StatusChangeEvent(Event):
@@ -247,5 +248,5 @@ class StatusChangeEvent(Event):
 class StatusReceivedEvent(Event):
     type: Literal[EventType.status_receive] = Field(default=EventType.status_receive)
     timestamp: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    regions: list[Region]
+    regions: List[Region]
     is_start: bool = Field(default=False)

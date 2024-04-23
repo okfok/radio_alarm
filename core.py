@@ -2,6 +2,7 @@ import asyncio
 from types import coroutine
 
 import pydantic
+from typing import Dict, List
 
 import exceptions
 import models
@@ -11,7 +12,7 @@ loop = asyncio.new_event_loop()
 
 
 class EventHandler:
-    _callbacks: dict[models.EventType, list[callable]] = {
+    _callbacks: Dict[models.EventType, List[callable]] = {
         event_type: list() for event_type in models.EventType
     }
 
