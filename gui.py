@@ -65,6 +65,8 @@ async def start():
     global mainloop_task
     mainloop_task = loop.create_task(events.mainloop())
 
+    core.Config.load()
+
     logs.logger.info("Mainloop enter")
 
     try:
