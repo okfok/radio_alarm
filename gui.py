@@ -41,14 +41,6 @@ root.wm_iconphoto(True, ImageTk.PhotoImage(ico))
 
 loop = asyncio.get_event_loop()
 
-
-async def mainloop():
-    try:
-        await events.mainloop()
-    except asyncio.CancelledError:
-        ...
-
-
 mainloop_task = None
 
 last_update = tk.Label(root, text="Last Update: ")
