@@ -8,7 +8,6 @@ from typing import Literal
 import pyautogui
 import pygetwindow
 from pydantic import BaseModel, Field
-
 import exceptions
 
 
