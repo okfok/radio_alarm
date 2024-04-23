@@ -4,6 +4,7 @@ import datetime
 import aiohttp
 import pydantic
 from pydantic import TypeAdapter
+from typing import List
 
 import core
 import models
@@ -26,7 +27,7 @@ async def alarm_trigger(event: models.AlertEvent, silent: bool = False):
     logger.info(f'Alert action exit')
 
 
-async def request_status() -> list[models.Region] | None:
+async def request_status():
     try:
         logger.debug(f'Status check {datetime.datetime.now()}')
         async with aiohttp.ClientSession(
@@ -36,7 +37,7 @@ async def request_status() -> list[models.Region] | None:
                 core.Config().reginId)
         logger.debug(f'Packet received: {response}')
 
-        regions = TypeAdapter(list[models.Region]).validate_python(response)
+        regions = TypeAdapter(List[models.Region]).validate_python(response)
 
         await core.EventHandler.call(models.StatusReceivedEvent(regions=regions))
 

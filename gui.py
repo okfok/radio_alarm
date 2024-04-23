@@ -85,11 +85,7 @@ async def set_last_status(event: models.StatusChangeEvent):
     tz = get_localzone()
     local_timestamp = event.status.lastUpdate.astimezone(tz)
     last_status['text'] = f"Last Status: {local_timestamp.strftime(TIME_FORMAT)}"
-    status_label['text'] = f"Status: {
-    ' '.join(map(lambda x: x.type, event.status.activeAlerts))
-    if len(event.status.activeAlerts) > 0
-    else 'Clear'
-    }"
+    status_label['text'] = f"Status: {' '.join(map(lambda x: x.type, event.status.activeAlerts)) if len(event.status.activeAlerts) > 0 else 'Clear'}"
     status_label['fg'] = '#f00' if len(event.status.activeAlerts) else '#0f0'
 
 
