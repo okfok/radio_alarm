@@ -20,4 +20,8 @@ def init():
 
 if __name__ == '__main__':
     init()
-    core.loop.run_until_complete(events.mainloop())
+    logs.logger.info("Mainloop enter")
+    try:
+        core.loop.run_until_complete(events.mainloop())
+    finally:
+        logs.logger.info("Mainloop exit")
