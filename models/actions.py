@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import Literal, Dict
+from typing import Literal, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -18,10 +18,10 @@ class Action(BaseModel):
 
 
 class AlertAction(Action):
-    timetable: Timetable = Field(default_factory=Timetable)
+    timetable: Optional[Timetable] = Field(default_factory=Timetable)
 
     async def act(self, event: AlertEvent) -> None:
-        if not self.is_in_timetable():
+        if self.timetable is not None and not self.is_in_timetable():
             raise exceptions.OutOfTimeTableException()
 
     def is_in_timetable(self) -> bool:
