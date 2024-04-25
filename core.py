@@ -1,11 +1,15 @@
 import asyncio
+import sys
 from types import coroutine
 from typing import Dict, List
 
 import pydantic
 
+import core
 import exceptions
+import logs
 import models
+import utils
 from logs import logger
 
 loop = asyncio.new_event_loop()
@@ -164,3 +168,15 @@ async def try_job(
             log_func(f'{fail_log} {exc}') if fail_log_append_exc else log_func(fail_log)
 
         return False
+
+
+def init():
+    if '-c' in sys.argv:
+        utils.console_command(*sys.argv[sys.argv.index('-c') + 1:])
+        return
+    logs.init_logger(('--debug' in sys.argv or '-d' in sys.argv))
+    logs.logger.info("Starting")
+    core.Config.load()
+
+    if '--reload-conf' in sys.argv:
+        core.Config.save()

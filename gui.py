@@ -9,10 +9,9 @@ from async_tkinter_loop import async_handler, async_mainloop
 from tzlocal import get_localzone
 
 import core
-import events
+import funcs
 import logs
 import models
-from radio_alarm import init
 
 
 def resource_path(relative_path):
@@ -28,7 +27,7 @@ def resource_path(relative_path):
 
 TIME_FORMAT = '%H:%M:%S %d.%m'
 
-init()
+core.init()
 
 root = tk.Tk()
 root.title('Radio Alarm')
@@ -55,7 +54,7 @@ async def start():
     stop_button['state'] = 'normal'
 
     global mainloop_task
-    mainloop_task = loop.create_task(events.mainloop())
+    mainloop_task = loop.create_task(funcs.mainloop())
 
     core.Config.load()
 
