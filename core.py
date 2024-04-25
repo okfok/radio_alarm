@@ -24,6 +24,15 @@ class EventHandler:
         cls._callbacks[event_type].append(callback)
 
     @classmethod
+    def clear_callbacks(cls, event_type: models.EventType = None):
+        if event_type is None:
+            cls._callbacks = {
+                event_type: list() for event_type in models.EventType
+            }
+        else:
+            cls._callbacks[event_type] = list()
+
+    @classmethod
     def register_callback_dec(cls, event_type: models.EventType):
         def wrapper(callback):
             cls.register_callback(callback, event_type)
@@ -84,6 +93,8 @@ class Config:
 
     @classmethod
     def register_config_actions(cls):
+        EventHandler.clear_callbacks(models.EventType.alert)
+
         for action in cls._conf.actions:
             cls.register_action(action)
 
