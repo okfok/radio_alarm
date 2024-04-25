@@ -8,7 +8,7 @@ from models.actions import AlertAction
 if sys.platform == "win32":
     from models.win_actions import *
 
-AlertActionTypes = tuple(AlertAction.__subclasses__())
+AlertActionTypes = Union[tuple(AlertAction.__subclasses__())]
 
 
 class ConfigModel(BaseModel):
@@ -17,4 +17,4 @@ class ConfigModel(BaseModel):
     api_base_url: Union[str, None] = Field(default=None)
     api_key: Union[str, None] = Field(default=None)
     enable_ssl_validation: bool = Field(default=True)
-    actions: List[Union[AlertActionTypes]] = Field(default_factory=list, discriminator='type')
+    actions: List[AlertActionTypes] = Field(default_factory=list, discriminator='type')
