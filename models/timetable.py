@@ -11,15 +11,23 @@ class Interval(BaseModel):
     def is_in_interval(self, time: datetime.time):
         return self.start <= time <= self.end
 
+    @classmethod
+    def full_time(cls):
+        return cls(start=datetime.time(0), end=datetime.time(23, 59, 59, 999999))
+
+    @classmethod
+    def full_time_list(cls):
+        return [cls.full_time()]
+
 
 class Timetable(BaseModel):
-    mon: List[Interval] = Field(default_factory=list)
-    tue: List[Interval] = Field(default_factory=list)
-    wed: List[Interval] = Field(default_factory=list)
-    thu: List[Interval] = Field(default_factory=list)
-    fri: List[Interval] = Field(default_factory=list)
-    sat: List[Interval] = Field(default_factory=list)
-    sun: List[Interval] = Field(default_factory=list)
+    mon: List[Interval] = Field(default_factory=Interval.full_time)
+    tue: List[Interval] = Field(default_factory=Interval.full_time)
+    wed: List[Interval] = Field(default_factory=Interval.full_time)
+    thu: List[Interval] = Field(default_factory=Interval.full_time)
+    fri: List[Interval] = Field(default_factory=Interval.full_time)
+    sat: List[Interval] = Field(default_factory=Interval.full_time)
+    sun: List[Interval] = Field(default_factory=Interval.full_time)
 
     def is_in_timetable(self, dt: datetime.datetime):
         intervals = {
