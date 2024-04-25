@@ -1,7 +1,7 @@
 import sys
 
 import core
-import events
+import loop
 import logs
 import utils
 
@@ -22,6 +22,6 @@ if __name__ == '__main__':
     init()
     logs.logger.info("Mainloop enter")
     try:
-        core.loop.run_until_complete(events.mainloop())
+        core.loop.run_until_complete(loop.mainloop())
     finally:
         logs.logger.info("Mainloop exit")
