@@ -1,8 +1,8 @@
 import asyncio
 from types import coroutine
+from typing import Dict, List
 
 import pydantic
-from typing import Dict, List
 
 import exceptions
 import models
@@ -56,16 +56,17 @@ class Config:
         return cls._conf
 
     @classmethod
-    def load(cls):
+    def load(cls, file_name: str = None):
+        file_name = file_name or 'conf.json'
         try:
-            with open('conf.json', 'r', encoding='utf-8') as f:
+            with open(file_name, 'r', encoding='utf-8') as f:
                 cls._conf = models.ConfigModel.parse_raw(f.read())
                 cls.register_config_actions()
 
         except FileNotFoundError as err:
             logger.error("Config file not found! Generating template.")
             cls._conf = models.ConfigModel()
-            with open('conf.json', 'w', encoding='utf-8') as f:
+            with open(file_name, 'w', encoding='utf-8') as f:
                 f.write(cls._conf.model_dump_json())
             logger.debug("Config file generated. Exiting.")
             raise err
@@ -74,8 +75,9 @@ class Config:
         logger.debug("Loaded successfully")
 
     @classmethod
-    def save(cls):
-        with open('conf.json', 'w', encoding='utf-8') as f:
+    def save(cls, file_name: str = None):
+        file_name = file_name or 'conf.json'
+        with open(file_name, 'w', encoding='utf-8') as f:
             f.write(cls._conf.model_dump_json())
 
     @classmethod
