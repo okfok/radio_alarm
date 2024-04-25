@@ -7,50 +7,6 @@
   "triggers": [
     {
       "trigger_type": "Copy",
-      "timetable": {
-        "mon": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "tue": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "wed": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "thu": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "fri": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "sat": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ],
-        "sun": [
-          {
-            "start": "00:00:00",
-            "end": "23:59:59"
-          }
-        ]
-      },
       "source_files": {
         "AIR": {
           "start": "path-to-air-alert-file-start",

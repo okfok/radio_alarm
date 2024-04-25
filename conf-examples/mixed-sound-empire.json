@@ -6,7 +6,7 @@
   "enable_ssl_validation": false,
   "triggers": [
     {
-      "trigger_type": "Win Shortcut",
+      "trigger_type": "Win PowerShell Shortcut",
       "timetable": {
         "mon": [
           {
@@ -82,16 +82,8 @@
       "window_name": "Sound Empire",
       "shortcut": {
         "AIR": {
-          "start": [
-            "ctrl",
-            "alt",
-            "a"
-          ],
-          "end": [
-            "ctrl",
-            "alt",
-            "z"
-          ]
+          "start": "^%a",
+          "end": "^%z"
         }
       }
     },
