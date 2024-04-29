@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 import tkinter as tk
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 from async_tkinter_loop import async_handler, async_mainloop
@@ -30,7 +31,7 @@ core.init()
 
 root = tk.Tk()
 root.title('Radio Alarm')
-root.geometry('250x150')
+root.geometry('250x250')
 root.resizable(False, False)
 
 ico = Image.open(resource_path("favicon.ico"))
@@ -47,6 +48,22 @@ status_label = tk.Label(root, text="Status: off", fg='#00f')
 start_button = tk.Button(root, text="Start")
 stop_button = tk.Button(root, text="Stop", state='disabled')
 
+actions_list = ttk.Labelframe(root, text="Actions")
+
+
+def update_action():
+    for i in list(actions_list.children.values()):
+        i.destroy()
+
+    actions = core.Config().actions
+    for action in actions:
+        fg = '#000'
+        if action.timetable is not None and action.is_in_timetable():
+            fg = '#00f'
+
+        lb = tk.Label(actions_list, text=action.type, fg=fg)
+        lb.pack()
+
 
 async def start():
     start_button['state'] = 'disabled'
@@ -56,6 +73,8 @@ async def start():
     mainloop_task = loop.create_task(funcs.mainloop())
 
     core.Config.load()
+
+    update_action()
 
     logs.logger.info("Mainloop enter")
 
@@ -89,6 +108,7 @@ async def set_last_status(event: models.StatusChangeEvent):
 @core.EventHandler.register_callback_dec(models.EventType.status_receive)
 async def set_last_update(event: models.StatusReceivedEvent):
     last_update['text'] = f"Last Update: {event.timestamp.strftime(TIME_FORMAT)}"
+    update_action()
 
 
 start_button.config(command=async_handler(start))
@@ -99,6 +119,7 @@ stop_button.pack()
 status_label.pack()
 last_update.pack()
 last_status.pack()
+actions_list.pack(fill="both", expand="yes")
 
 if __name__ == '__main__':
     async_mainloop(root)
