@@ -56,8 +56,7 @@ class WinAppPSShortcutAction(AlertAction):
                         [Microsoft.VisualBasic.Interaction]::AppActivate("{self.window_name}");
                         """,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    shell=False
+                    stderr=asyncio.subprocess.PIPE
                 )
             ).communicate()
 
@@ -72,8 +71,7 @@ class WinAppPSShortcutAction(AlertAction):
                         [System.Windows.Forms.SendKeys]::SendWait('{self.shortcut[event.alert.type][event.alert_type]}')
                         """,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    shell=False
+                    stderr=asyncio.subprocess.PIPE
                 )
             ).communicate()
 
