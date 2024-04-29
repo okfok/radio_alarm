@@ -21,13 +21,13 @@ class Interval(BaseModel):
 
 
 class Timetable(BaseModel):
-    mon: List[Interval] = Field(default_factory=Interval.full_time)
-    tue: List[Interval] = Field(default_factory=Interval.full_time)
-    wed: List[Interval] = Field(default_factory=Interval.full_time)
-    thu: List[Interval] = Field(default_factory=Interval.full_time)
-    fri: List[Interval] = Field(default_factory=Interval.full_time)
-    sat: List[Interval] = Field(default_factory=Interval.full_time)
-    sun: List[Interval] = Field(default_factory=Interval.full_time)
+    mon: List[Interval] = Field(default_factory=Interval.full_time_list)
+    tue: List[Interval] = Field(default_factory=Interval.full_time_list)
+    wed: List[Interval] = Field(default_factory=Interval.full_time_list)
+    thu: List[Interval] = Field(default_factory=Interval.full_time_list)
+    fri: List[Interval] = Field(default_factory=Interval.full_time_list)
+    sat: List[Interval] = Field(default_factory=Interval.full_time_list)
+    sun: List[Interval] = Field(default_factory=Interval.full_time_list)
 
     def is_in_timetable(self, dt: datetime.datetime):
         intervals = {
