@@ -31,8 +31,11 @@ class AlertEventType(str, Enum):
 
 
 class ActionType(str, Enum):
-    none = 'None'
-    copy_file = 'Copy File'
-    windows_application_shortcut = "Win Shortcut"
-    windows_powershell_application_shortcut = "Win PowerShell Shortcut"
-    local_console_execute = "Local Console Execute"
+    none = "none"
+    copy_file = "copy_file"
+    windows_application_shortcut = "windows_application_shortcut"
+    windows_powershell_application_shortcut = "windows_powershell_application_shortcut"
+    local_console_execute = "local_console_execute"
+
+    py_auto_gui_shortcut = "py_auto_gui_shortcut"
+    power_shell_shortcut = "power_shell_shortcut"
