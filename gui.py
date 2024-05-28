@@ -59,16 +59,18 @@ async def start():
 
     logs.logger.info("Mainloop enter")
 
-    try:
-        await asyncio.gather(mainloop_task)
-    except asyncio.CancelledError:
-        pass
-    finally:
-        logs.logger.info("Mainloop exit")
-        stop_button['state'] = 'disabled'
-        start_button['state'] = 'normal'
-        status_label['text'] = 'Status: off'
-        status_label['fg'] = '#00f'
+    while True:
+        try:
+            await asyncio.gather(mainloop_task)
+        except asyncio.CancelledError:
+            logs.logger.info("Mainloop exit")
+            stop_button['state'] = 'disabled'
+            start_button['state'] = 'normal'
+            status_label['text'] = 'Status: off'
+            status_label['fg'] = '#00f'
+            break
+        except Exception as exc:
+            logs.logger.info(exc)
 
 
 async def stop():
